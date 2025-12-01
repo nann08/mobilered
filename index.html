@@ -1,0 +1,1031 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <!-- Viewport for robust mobile scaling and safe area handling -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    
+    <!-- iOS PWA Meta Tags -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-title" content="Nann Boy">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#E83942"> <!-- Updated theme color to Red -->
+    
+    <!-- Embedded App Icon (Red Gameboy Style) -->
+    <link rel="apple-touch-icon" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA1MTIgNTEyIj48cmVjdCB3aWR0aD0iNTEyIiBoZWlnaHQ9IjUxMiIgcng9IjkwIiBmaWxsPSIjZGMyNjI2Ii8+PHBhdGggZD0iTTQwIDQwSBM0NzIgNDcyVjEzMEg0MHoiIGZpbGw9Im5vbmUiLz48cmVjdCB4PSI1MCIgeT0iNTAiIHdpZHRoPSI0MTIiIGhlaWdodD0iMjgwIiByeD0iMjAiIGZpbGw9IiMzNzQxNTEiIHN0cm9rZT0iIzFmMjkzNyIgc3Ryb2tlLXdpZHRoPSIxMCIvPjxyZWN0IHg9IjEwMCIgeT0iODAiIHdpZHRoPSIzMTIiIGhlaWdodD0iMjIwIiBmaWxsPSIjOWJiYzBmIi8+PGNpcmNsZSBjeD0iMzk1IiBjeT0iNDAwIiByPSIyNSIgZmlsbD0iIzFmMjkzNyIvPjxjaXJjbGUgY3g9IjMyNSIgY3k9IjQzNSIgcj0iMjUiIGZpbGw9IiMxZjI5MzciLz48cmVjdCB4PSI4NSIgeT0iMzk1IiB3aWR0aD0iMTAwIiBoZWlnaHQ9IjMwIiByeD0iNSIgZmlsbD0iIzFmMjkzNyIvPjxyZWN0IHg9IjEyMCIgeT0iMzYwIiB3aWR0aD0iMzAiIGhlaWdodD0iMTAwIiByeD0iNSIgZmlsbD0iIzFmMjkzNyIvPjwvc3ZnPg==">
+
+    <title>Nann Emulator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
+    
+    <style>
+        /* Global box model reset */
+        *, *::before, *::after {
+            box-sizing: border-box;
+        }
+
+        :root {
+            --screen-color: #9bbc0f;
+            --screen-shadow: #0f380f;
+            /* Safe area variables for notched iPhones */
+            --safe-top: env(safe-area-inset-top, 20px);
+            --safe-bottom: env(safe-area-inset-bottom, 20px);
+            --console-red: #E83942;
+        }
+        
+        @keyframes led-glow {
+            0% { box-shadow: 0 0 5px #990000, 0 0 20px rgba(255, 0, 0, 0.4); opacity: 0.8; }
+            50% { box-shadow: 0 0 10px #ff0000, 0 0 30px rgba(255, 0, 0, 0.8); opacity: 1; }
+            100% { box-shadow: 0 0 5px #990000, 0 0 20px rgba(255, 0, 0, 0.4); opacity: 0.8; }
+        }
+
+        html {
+            width: 100%;
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            overscroll-behavior: none;
+            position: fixed; 
+            overflow: hidden;
+            background-color: var(--console-red); /* Match background to console */
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--console-red); /* Seamless full screen */
+            height: 100%; 
+            width: 100%;
+            display: flex;
+            align-items: flex-start; /* Align top for transform logic */
+            justify-content: center;
+            overscroll-behavior: none; 
+            touch-action: none;
+            margin: 0;
+            padding: 0;
+        }
+
+        #console-wrapper {
+            transform-origin: top center; /* Scale from top */
+            will-change: transform;
+            display: flex;
+            justify-content: center;
+            /* Height and Width are handled by JS for immersive fit */
+        }
+
+        .gbc-body {
+            /* Fixed width for reference layout, height is dynamic */
+            --console-width: 440px; 
+
+            background-color: var(--console-red);
+            width: var(--console-width); 
+            /* Height is set dynamically by JS to fill screen */
+            
+            /* Removed border-radius and outer shadow for seamless look */
+            box-shadow: 
+                inset 10px 10px 25px rgba(255,255,255,0.25), 
+                inset -8px -8px 20px rgba(0,0,0,0.1);
+            
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            
+            /* Padding accounts for safe area + original spacing */
+            padding-top: calc(30px + var(--safe-top)); 
+            padding-bottom: var(--safe-bottom);
+        }
+
+        .gbc-screen-lens {
+            background-color: #3f3f46;
+            width: 380px;
+            height: 310px;
+            border-radius: 15px 15px 50px 15px;
+            padding: 20px 30px;
+            box-shadow: inset 0px 0px 20px rgba(0,0,0,0.9),
+                        inset 2px 2px 5px rgba(0,0,0,0.6);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+            flex-shrink: 0; /* Don't shrink the screen */
+        }
+
+        .lens-branding {
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        
+        .power-led {
+            width: 10px;
+            height: 10px;
+            background-color: #1c1c1c; 
+            border-radius: 50%;
+            box-shadow: inset 1px 1px 2px rgba(0,0,0,0.7);
+            transition: background-color 0.2s;
+        }
+        .power-led.on {
+            background-color: #ff0000; 
+            box-shadow: 0 0 8px #ff3333, inset 0 0 5px rgba(255, 255, 255, 0.7);
+            animation: led-glow 1.5s infinite alternate ease-in-out;
+        }
+
+        .lcd-screen {
+            background-color: var(--screen-color);
+            width: 320px;
+            height: 240px;
+            box-shadow: inset 3px 3px 10px rgba(0,0,0,0.8);
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative; 
+            
+            &::before {
+                content: '';
+                position: absolute;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: 
+                    repeating-linear-gradient(to bottom, 
+                        rgba(0,0,0,0.1) 0px, 
+                        rgba(0,0,0,0.1) 1px, 
+                        transparent 1px, 
+                        transparent 2px
+                    ),
+                    repeating-linear-gradient(to right, 
+                        rgba(0,0,0,0.05) 0px, 
+                        rgba(0,0,0,0.05) 1px, 
+                        transparent 1px, 
+                        transparent 2px
+                    );
+                pointer-events: none;
+                z-index: 5;
+            }
+        }
+        
+        iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+            background-color: transparent; 
+        }
+        
+        .menu-ui {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: white; 
+            padding: 20px; 
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center; 
+            z-index: 100;
+        }
+
+        #file-input { display: none; }
+
+        .upload-label {
+            display: inline-flex;
+            align-items: center;
+            padding: 12px 24px;
+            background-color: #dc2626; 
+            color: white;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: background-color 0.2s, box-shadow 0.2s;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+        .upload-label:hover { background-color: #b91c1c; }
+
+        .nann-brand {
+            font-family: 'Inter', sans-serif;
+            font-style: italic;
+            font-weight: 900;
+            color: #1f2937; 
+            font-size: 28px;
+            letter-spacing: 1px;
+            margin-top: 20px;
+            margin-bottom: 10px;
+            text-shadow: 
+                1px 1px 0px rgba(255, 255, 255, 0.5), 
+                -1px -1px 0px rgba(0, 0, 0, 0.3);  
+        }
+
+        /* Controls area now fills the rest of the height */
+        .controls-area {
+            width: 100%;
+            flex-grow: 1; 
+            position: relative;
+        }
+
+        /* --- D-PAD Styles --- */
+        .dpad {
+            position: absolute;
+            top: 40px; /* Shifted slightly for spacing */
+            left: 40px;
+            width: 130px;
+            height: 130px;
+        }
+        .dpad-cross {
+            width: 100%;
+            height: 100%;
+            position: relative;
+        }
+        .dpad-arm {
+            background-color: #1c1c1c; 
+            position: absolute;
+            border-radius: 6px;
+            box-shadow: 
+                inset 2px 2px 4px rgba(255,255,255,0.3), 
+                inset -2px -2px 4px rgba(0,0,0,0.4),    
+                0 6px 0 #000;                          
+            transition: transform 0.1s, box-shadow 0.1s; 
+            will-change: transform, box-shadow; 
+        }
+        .dpad-arm.pressed-arm {
+            transform: translateY(2px) !important;
+            box-shadow: 
+                inset 2px 2px 4px rgba(255,255,255,0.3), 
+                inset -2px -2px 4px rgba(0,0,0,0.4),    
+                0 4px 0 #000; 
+        }
+        .dpad-h { width: 130px; height: 40px; top: 45px; left: 0; }
+        .dpad-v { width: 40px; height: 130px; left: 45px; top: 0; }
+        .dpad-center {
+            position: absolute; width: 40px; height: 40px; background-color: #1c1c1c; top: 45px; left: 45px; z-index: 10;
+        }
+        .dpad-center::after {
+            content: ''; position: absolute; top: 5px; left: 5px; width: 30px; height: 30px; border-radius: 50%; background: radial-gradient(circle, #000 0%, #1c1c1c 70%); opacity: 0.9;
+        }
+        .dpad-btn { 
+            position: absolute; width: 45px; height: 45px; z-index: 20; cursor: pointer; -webkit-tap-highlight-color: transparent; 
+            transition: background-color 0.1s;
+        }
+        .dpad-btn.pressed {
+            background-color: rgba(255, 255, 255, 0.1); 
+        }
+
+        .dpad-up { top: 0; left: 42px; } .dpad-down { bottom: 0; left: 42px; } .dpad-left { top: 42px; left: 0; } .dpad-right { top: 42px; right: 0; }
+
+        /* --- Action Buttons (A/B) --- */
+        .action-buttons {
+            position: absolute; top: 40px; right: 30px; width: 150px; height: 80px; transform: rotate(-20deg);
+        }
+        .btn-round, .btn-util {
+            width: 60px; height: 60px; 
+            background-color: #1c1c1c; 
+            border-radius: 50%; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center;
+            cursor: pointer; 
+            position: absolute; 
+            user-select: none; 
+            -webkit-tap-highlight-color: transparent; 
+            transition: transform 0.1s, box-shadow 0.1s;
+            box-shadow: 
+                inset 3px 3px 8px rgba(255,255,255,0.2), 
+                inset -3px -3px 8px rgba(0,0,0,0.5), 
+                0 6px 0 #000; 
+            color: rgba(0,0,0,0.5); 
+            font-size: 24px;
+            font-weight: 900;
+            font-family: sans-serif;
+            text-shadow: 1px 1px 0px rgba(255, 255, 255, 0.15); 
+        }
+        .btn-round.pressed, .btn-util.pressed {
+            transform: translateY(4px) !important; 
+            box-shadow: 
+                inset 3px 3px 8px rgba(255,255,255,0.2), 
+                inset -3px -3px 8px rgba(0,0,0,0.5), 
+                0 2px 0 #000; 
+        }
+        .btn-b { bottom: 0; left: 0; } 
+        .btn-a { top: 0; right: 0; }
+        
+        /* --- Meta Buttons --- */
+        .meta-buttons {
+            /* Positioned from the BOTTOM of the flexible container */
+            position: absolute; bottom: 60px; left: 50%; transform: translateX(-50%); display: flex; gap: 30px; 
+        }
+        .btn-pill {
+            width: 70px; height: 18px; background-color: #6b7280; border-radius: 12px; transform: rotate(-25deg);
+            box-shadow: 
+                inset 2px 2px 5px rgba(255,255,255,0.3), 
+                inset -2px -2px 5px rgba(0,0,0,0.5),    
+                0 4px 0 #4b5563; 
+            cursor: pointer; -webkit-tap-highlight-color: transparent; transition: transform 0.1s, box-shadow 0.1s;
+        }
+        .btn-pill.pressed {
+            transform: rotate(-25deg) translateY(2px);
+            box-shadow: 
+                inset 2px 2px 5px rgba(255,255,255,0.3), 
+                inset -2px -2px 5px rgba(0,0,0,0.5),
+                0 2px 0 #4b5563; 
+        }
+        
+        .meta-label, .btn-util-label {
+            font-size: 11px; 
+            color: #000000; 
+            text-align: center; 
+            font-weight: 900; 
+            letter-spacing: 1px; 
+            user-select: none;
+            font-family: 'Courier New', Courier, monospace; 
+        }
+        
+        .meta-label { margin-top: 10px; transform: rotate(-25deg); }
+        .btn-util-label { margin-top: 5px; }
+        
+        .utility-buttons {
+            position: absolute; bottom: 150px; width: 100%; display: flex; justify-content: space-between; padding: 0 40px;
+            display: none; 
+        }
+
+        .util-btn-group { display: flex; flex-direction: column; align-items: center; }
+        .btn-util { width: 50px; height: 50px; position: relative; }
+        
+        .virtual-key-btn {
+            padding: 10px;
+            background-color: #f0f4f8;
+            border: 2px solid #ccc;
+            border-radius: 8px;
+            text-align: center;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background-color 0.1s;
+        }
+        .virtual-key-btn:hover { background-color: #e2e8f0; }
+        
+        .binding-row {
+            display: flex;
+            justify-content: space-between;
+            width: 250px;
+            padding: 8px 0;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .binding-key {
+            padding: 2px 8px;
+            background-color: #eee;
+            border-radius: 4px;
+            cursor: pointer;
+            font-family: monospace;
+            min-width: 50px;
+            text-align: center;
+        }
+        
+        .binding-key.active-binding {
+            background-color: #fca5a5; 
+            color: #b91c1c; 
+            box-shadow: 0 0 5px #fca5a5;
+        }
+
+        /* --- Install Prompt Styles --- */
+        #install-prompt {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 90%;
+            max-width: 400px;
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+            z-index: 1000;
+            display: none; /* Hidden by default */
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            border: 2px solid #3b82f6;
+            animation: slideUp 0.5s ease-out;
+        }
+        @keyframes slideUp {
+            from { transform: translate(-50%, 100%); opacity: 0; }
+            to { transform: translate(-50%, 0); opacity: 1; }
+        }
+        .install-icon {
+            font-size: 24px;
+            margin-bottom: 10px;
+        }
+        .install-text {
+            color: #1f2937;
+            font-size: 14px;
+            margin-bottom: 15px;
+        }
+        .share-icon-img {
+            width: 20px;
+            height: 20px;
+            vertical-align: middle;
+            display: inline-block;
+            margin: 0 5px;
+        }
+        #close-install {
+            position: absolute;
+            top: 5px;
+            right: 10px;
+            font-weight: bold;
+            color: #9ca3af;
+            cursor: pointer;
+        }
+        
+    </style>
+</head>
+<body oncontextmenu="return false;">
+
+    <!-- Install Prompt for iOS -->
+    <div id="install-prompt">
+        <div id="close-install">✕</div>
+        <div class="install-icon">📲</div>
+        <div class="font-bold text-lg mb-2">Install App</div>
+        <div class="install-text">
+            To install this app on your iPhone:<br>
+            1. Tap the <strong>Share</strong> button <svg class="share-icon-img" viewBox="0 0 50 50" fill="none" stroke="#007AFF" stroke-width="4"><path d="M25 5L25 35 M15 15L25 5L35 15 M10 25V40H40V25"/></svg><br>
+            2. Scroll down and tap <strong>"Add to Home Screen"</strong>
+        </div>
+    </div>
+
+    <div id="console-wrapper">
+        <div class="gbc-body" id="gbc-body">
+            
+            <div class="gbc-screen-lens">
+                <div class="lens-branding">
+                    <div class="power-led" id="power-led"></div> 
+                    <div class="text-xs text-zinc-400 font-bold tracking-wider">BATTERY</div>
+                </div>
+                
+                <div class="lcd-screen" id="lcd-screen">
+                    <div id="loading-overlay" class="text-white text-center">
+                        <svg class="animate-spin h-5 w-5 text-white inline-block mr-2 -mt-1" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        Loading...
+                    </div>
+                    
+                    <iframe id="game-iframe" src="about:blank" allow="keyboard; game" referrerpolicy="no-referrer"></iframe>
+                    
+                    <!-- Key Binding Menu -->
+                    <div id="key-binding-menu" class="menu-ui">
+                        <h2 class="text-xl font-bold mb-4 text-gray-800">Key Bindings</h2>
+                        <div id="bindings-list" class="max-h-48 overflow-y-auto w-full flex flex-col items-center"></div>
+                        <button id="btn-close-key-map" class="mt-4 px-6 py-2 bg-red-600 text-white rounded-lg shadow-lg hover:bg-red-700 transition">Close Menu</button>
+                    </div>
+
+                    <!-- Virtual Keypad for Mobile Binding -->
+                    <div id="key-selection-modal" class="menu-ui" style="display: none; z-index: 300;">
+                        <h2 class="text-xl font-bold mb-4 text-gray-800">Select Key for <span id="binding-label-display" class="text-red-600"></span></h2>
+                        <div id="virtual-keypad" class="grid grid-cols-4 gap-4 p-4 max-w-sm overflow-y-auto" style="max-height: 70%;">
+                            <!-- Keys injected by script -->
+                        </div>
+                        <button id="btn-cancel-key-select" class="mt-4 px-6 py-2 bg-gray-600 text-white rounded-lg shadow-lg hover:bg-gray-700 transition">Cancel</button>
+                    </div>
+
+                    <!-- Upload Menu -->
+                    <div id="upload-menu" class="menu-ui">
+                        <h2 class="text-xl font-bold mb-6 text-gray-800">Load Game ROM</h2>
+                        <input type="file" id="file-input" accept=".html,text/html">
+                        <label for="file-input" class="upload-label mb-4">
+                            <svg class="w-5 h-5 inline-block mr-2 -mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
+                            Choose .html File
+                        </label>
+                        <p id="file-status" class="text-sm text-gray-600 mb-8 text-center px-4">Only local HTML files are supported.</p>
+                        <button id="btn-close-upload" class="px-6 py-2 bg-gray-600 text-white rounded-lg shadow-lg hover:bg-gray-700 transition">Back to Game</button>
+                    </div>
+                    
+                </div>
+            </div>
+
+            <div class="nann-brand">NANN BOY</div>
+
+            <div class="controls-area">
+                <div class="dpad">
+                    <div class="dpad-cross">
+                        <div class="dpad-arm dpad-h"></div>
+                        <div class="dpad-arm dpad-v"></div>
+                        <div class="dpad-center"></div>
+                        <div class="dpad-btn dpad-up" data-label="Up"></div>
+                        <div class="dpad-btn dpad-down" data-label="Down"></div>
+                        <div class="dpad-btn dpad-left" data-label="Left"></div>
+                        <div class="dpad-btn dpad-right" data-label="Right"></div>
+                    </div>
+                </div>
+
+                <div class="action-buttons">
+                    <div class="btn-round btn-b" id="btn-b" data-label="B">B</div>
+                    <div class="btn-round btn-a" id="btn-a" data-label="A">A</div>
+                </div>
+                
+                <div class="utility-buttons" style="display: none;"> 
+                    <div class="util-btn-group">
+                        <div class="btn-util" id="btn-load-rom-menu" data-label="Load Menu">F</div>
+                        <div class="util-btn-label">LOAD</div>
+                    </div>
+                    
+                    <div class="util-btn-group">
+                        <div class="btn-util" id="btn-key-map-menu" data-label="Key Map">K</div>
+                        <div class="util-btn-label">MAP</div>
+                    </div>
+                </div>
+
+                <div class="meta-buttons">
+                    <div class="flex flex-col items-center">
+                        <div class="btn-pill" id="btn-select" data-label="Select"></div>
+                        <div class="meta-label">SELECT</div>
+                    </div>
+                    <div class="flex flex-col items-center">
+                        <div class="btn-pill" id="btn-start" data-label="Start"></div>
+                        <div class="meta-label">START</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+
+        // Check if environment variables exist
+        const inCanvasEnvironment = typeof __firebase_config !== 'undefined';
+        const appId = inCanvasEnvironment ? __app_id : 'default-app-id';
+        const firebaseConfig = inCanvasEnvironment ? JSON.parse(__firebase_config) : null;
+        const initialAuthToken = inCanvasEnvironment ? __initial_auth_token : null;
+
+        let auth;
+        let userId = null;
+
+        let keyMap = {
+            'Up': { key: 'w', code: 'KeyW', keyCode: 87 },
+            'Down': { key: 's', code: 'KeyS', keyCode: 83 },
+            'Left': { key: 'a', code: 'KeyA', keyCode: 65 },
+            'Right': { key: 'f', code: 'KeyF', keyCode: 70 }, 
+            'A': { key: ' ', code: 'Space', keyCode: 32 }, 
+            'B': { key: 'd', code: 'KeyD', keyCode: 68 }, 
+            'Start': { key: 'Enter', code: 'Enter', keyCode: 13 },
+            'Select': { key: 'e', code: 'KeyE', keyCode: 69 },
+        };
+        
+        const keyMapStorageKey = `emulator-keymap-${appId}`;
+        let currentMenu = null; 
+        let activeBindingLabel = null;
+
+        const virtualKeys = [
+            { key: 'w', code: 'KeyW', display: 'W' },
+            { key: 'a', code: 'KeyA', display: 'A' },
+            { key: 's', code: 'KeyS', display: 'S' },
+            { key: 'd', code: 'KeyD', display: 'D' },
+            { key: ' ', code: 'Space', display: 'SPACE', keyCode: 32 },
+            { key: 'Enter', code: 'Enter', display: 'ENTER', keyCode: 13 },
+            { key: 'j', code: 'KeyJ', display: 'J' },
+            { key: 'k', code: 'KeyK', display: 'K' },
+            { key: 'l', code: 'KeyL', display: 'L' },
+            { key: 'x', code: 'KeyX', display: 'X' },
+            { key: 'z', code: 'KeyZ', display: 'Z' },
+            { key: 'f', code: 'KeyF', display: 'F' },
+            { key: 'e', code: 'KeyE', display: 'E' },
+            { key: '1', code: 'Digit1', display: '1' },
+            { key: '2', code: 'Digit2', display: '2' },
+            { key: '3', code: 'Digit3', display: '3' },
+            { key: '4', code: 'Digit4', display: '4' },
+        ];
+        
+        let virtualKeyStates = {};
+        let isAuthReady = false;
+
+        async function initFirebase() {
+            const loadingOverlay = document.getElementById('loading-overlay');
+            
+            if (!inCanvasEnvironment || !firebaseConfig || Object.keys(firebaseConfig).length === 0) {
+                console.warn("Firebase configuration not found. Running in local/deployed mode.");
+                loadingOverlay.style.display = 'none';
+                isAuthReady = true;
+                loadKeyMap(); 
+                return;
+            }
+
+            try {
+                const app = initializeApp(firebaseConfig);
+                auth = getAuth(app);
+                
+                if (initialAuthToken) {
+                    await signInWithCustomToken(auth, initialAuthToken);
+                } else {
+                    await signInAnonymously(auth);
+                }
+                
+                onAuthStateChanged(auth, (user) => {
+                    userId = user ? user.uid : null;
+                    isAuthReady = true;
+                    loadKeyMap();
+                    setTimeout(() => {
+                        loadingOverlay.style.display = 'none';
+                    }, 500);
+                });
+            } catch (error) {
+                console.error("Firebase Auth Error:", error);
+                loadingOverlay.innerHTML = "Authentication failed.";
+            }
+        }
+
+        function loadKeyMap() {
+            const storedMap = localStorage.getItem(keyMapStorageKey);
+            if (storedMap) {
+                try { keyMap = JSON.parse(storedMap); } catch (e) { console.error(e); }
+            }
+            renderBindings();
+        }
+
+        function saveKeyMap() {
+            localStorage.setItem(keyMapStorageKey, JSON.stringify(keyMap));
+            renderBindings();
+        }
+
+        function generateBindingRow(label) {
+            const mappedKey = keyMap[label];
+            const displayKey = mappedKey ? (mappedKey.key === ' ' ? 'SPACE' : mappedKey.key.toUpperCase()) : 'N/A';
+            return `<div class="binding-row"><span class="font-semibold">${label}:</span><span class="binding-key binding-target" data-label="${label}" id="binding-key-${label}">${displayKey}</span></div>`;
+        }
+
+        function renderBindings() {
+            const bindingsList = document.getElementById('bindings-list');
+            if (bindingsList) {
+                bindingsList.innerHTML = Object.keys(keyMap).map(generateBindingRow).join('');
+                bindingsList.querySelectorAll('.binding-target').forEach(span => {
+                    span.addEventListener('click', () => startKeyBinding(span.getAttribute('data-label')));
+                });
+            }
+        }
+
+        function handleGlobalKey(e) {
+            if (!isAuthReady) return;
+
+            if (currentMenu !== null && e.type === 'keydown') {
+                if (e.key === "Escape") {
+                    if (currentMenu === 'keyselect') hideKeySelection();
+                    else if (currentMenu === 'keymap') toggleKeyBindingMenu();
+                    else if (currentMenu === 'upload') toggleUploadMenu();
+                    e.preventDefault();
+                    return;
+                }
+            }
+            
+            if (currentMenu !== null) { e.preventDefault(); e.stopPropagation(); return; }
+
+            const entry = Object.entries(keyMap).find(([, mappedKey]) => mappedKey.code === e.code || mappedKey.key === e.key.toLowerCase());
+
+            if (entry) {
+                const label = entry[0];
+                const isDown = e.type === 'keydown';
+                e.preventDefault();
+                e.stopPropagation();
+
+                handleVirtualPress(label, isDown, true); 
+                
+                if (['Up', 'Down', 'Left', 'Right'].includes(label)) {
+                    const dpadArmH = document.querySelector('.dpad-h');
+                    const dpadArmV = document.querySelector('.dpad-v');
+                    
+                    if (isDown) {
+                        if (label === 'Left' || label === 'Right') dpadArmH?.classList.add('pressed-arm');
+                        if (label === 'Up' || label === 'Down') dpadArmV?.classList.add('pressed-arm');
+                    } else {
+                        const isHorizontalHeld = virtualKeyStates['Left'] || virtualKeyStates['Right'];
+                        const isVerticalHeld = virtualKeyStates['Up'] || virtualKeyStates['Down'];
+                        if (!isHorizontalHeld) dpadArmH?.classList.remove('pressed-arm');
+                        if (!isVerticalHeld) dpadArmV?.classList.remove('pressed-arm');
+                    }
+                }
+            } 
+        }
+
+        function handleVisualPress(element, isDown) {
+            if (element) {
+                 if (isDown) element.classList.add('pressed');
+                 else element.classList.remove('pressed');
+            }
+        }
+        
+        function handleVirtualPress(label, isDown, shouldSendMessage = true) {
+            const currentState = virtualKeyStates[label] || false;
+            if (isDown && !currentState) {
+                virtualKeyStates[label] = true;
+                if (shouldSendMessage) sendKey(label, true);
+            } 
+            else if (!isDown && currentState) {
+                virtualKeyStates[label] = false;
+                if (shouldSendMessage) sendKey(label, false);
+            }
+        }
+
+        function sendKey(label, isDown) {
+            const iframe = document.getElementById('game-iframe');
+            if (!iframe || !iframe.contentWindow || currentMenu !== null) return;
+            const mappedKey = keyMap[label];
+            if (!mappedKey) return;
+            iframe.contentWindow.postMessage({
+                type: isDown ? 'keydown' : 'keyup',
+                key: mappedKey.key,
+                code: mappedKey.code,
+                keyCode: mappedKey.keyCode
+            }, '*');
+        }
+
+        function startKeyBinding(label) {
+            activeBindingLabel = label;
+            document.getElementById(`binding-key-${label}`).classList.add('active-binding');
+            showKeySelection(label);
+        }
+
+        function showKeySelection(label) {
+            currentMenu = 'keyselect';
+            document.getElementById('key-selection-modal').style.display = 'flex';
+            document.getElementById('binding-label-display').textContent = label;
+            
+            const keypad = document.getElementById('virtual-keypad');
+            keypad.innerHTML = ''; 
+
+            virtualKeys.forEach(vKey => {
+                const btn = document.createElement('div');
+                btn.className = 'virtual-key-btn';
+                btn.textContent = vKey.display;
+                const keyCode = vKey.keyCode || (vKey.key.length === 1 ? vKey.key.toUpperCase().charCodeAt(0) : undefined);
+
+                btn.addEventListener('click', () => {
+                    keyMap[label] = { key: vKey.key, code: vKey.code, keyCode: keyCode }; 
+                    saveKeyMap();
+                    hideKeySelection();
+                });
+                keypad.appendChild(btn);
+            });
+        }
+        
+        function hideKeySelection() {
+            document.getElementById(`binding-key-${activeBindingLabel}`)?.classList.remove('active-binding');
+            document.getElementById('key-selection-modal').style.display = 'none';
+            activeBindingLabel = null;
+            currentMenu = 'keymap';
+        }
+
+        function toggleKeyBindingMenu() {
+            if (currentMenu === 'upload' || currentMenu === 'keyselect') return;
+            const menu = document.getElementById('key-binding-menu');
+            if (currentMenu === 'keymap') {
+                currentMenu = null;
+                menu.style.display = 'none';
+            } else {
+                currentMenu = 'keymap';
+                menu.style.display = 'flex';
+                renderBindings(); 
+            }
+        }
+
+        function toggleUploadMenu() {
+            if (currentMenu === 'keymap' || currentMenu === 'keyselect') return;
+            const menu = document.getElementById('upload-menu');
+            if (currentMenu === 'upload') {
+                currentMenu = null;
+                menu.style.display = 'none';
+            } else {
+                currentMenu = 'upload';
+                menu.style.display = 'flex';
+            }
+        }
+        
+        function handleFileUpload(event) {
+            const file = event.target.files[0];
+            const fileStatus = document.getElementById('file-status');
+            const iframe = document.getElementById('game-iframe');
+            const powerLed = document.getElementById('power-led');
+
+            powerLed.classList.remove('on'); 
+
+            if (!file) { fileStatus.textContent = "No file selected."; return; }
+            if (file.type !== 'text/html' && !file.name.endsWith('.html')) { fileStatus.textContent = "Error: Please select a valid HTML file."; return; }
+
+            fileStatus.textContent = `Loading ${file.name}...`;
+            const reader = new FileReader();
+
+            reader.onload = function(e) {
+                let htmlContent = e.target.result;
+
+                const fitStyle = `
+                    <style>
+                        html, body {
+                            margin: 0 !important;
+                            padding: 0 !important;
+                            width: 100vw !important;
+                            height: 100vh !important;
+                            overflow: hidden !important; 
+                            background-color: transparent !important;
+                            display: flex !important;
+                            justify-content: center !important;
+                            align-items: center !important;
+                        }
+                        canvas, #game, #canvas {
+                            max-width: 100% !important;
+                            max-height: 100% !important;
+                            object-fit: contain !important;
+                            margin: auto !important;
+                        }
+                    </style>
+                `;
+
+                const bridgeScript = `
+                    <script>
+                        window.addEventListener('message', function(e) {
+                            if (e.data.type === 'keydown' || e.data.type === 'keyup') {
+                                var event = new KeyboardEvent(e.data.type, {
+                                    key: e.data.key,
+                                    code: e.data.code,
+                                    keyCode: e.data.keyCode,
+                                    which: e.data.keyCode,
+                                    bubbles: true,
+                                    cancelable: true,
+                                    view: window
+                                });
+                                document.dispatchEvent(event);
+                                window.dispatchEvent(event);
+                            }
+                        });
+                    <\/script>
+                `;
+
+                if (htmlContent.includes('</head>')) {
+                    htmlContent = htmlContent.replace('</head>', fitStyle + '</head>');
+                } else {
+                    htmlContent = fitStyle + htmlContent;
+                }
+                
+                if (htmlContent.includes('</body>')) {
+                    htmlContent = htmlContent.replace('</body>', bridgeScript + '</body>');
+                } else {
+                    htmlContent += bridgeScript;
+                }
+
+                try {
+                    const blob = new Blob([htmlContent], { type: 'text/html' });
+                    const blobUrl = URL.createObjectURL(blob);
+                    
+                    iframe.onload = () => {
+                         if (iframe.dataset.blobUrl) URL.revokeObjectURL(iframe.dataset.blobUrl);
+                         iframe.dataset.blobUrl = blobUrl;
+                         fileStatus.textContent = `Game loaded: ${file.name}`;
+                         toggleUploadMenu(); 
+                         iframe.onload = null;
+                         iframe.contentWindow.focus();
+                         powerLed.classList.add('on');
+                    };
+                    iframe.src = blobUrl;
+                } catch (error) {
+                    console.error("Failed to load:", error);
+                    fileStatus.textContent = `Error loading file: ${file.name}`;
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        function setupControlListeners() {
+            const gameControls = document.querySelectorAll('.dpad-btn, .btn-round, .btn-pill');
+            const TAP_THRESHOLD_MS = 300; 
+
+            const pressHandler = (e) => {
+                if (!isAuthReady) return; 
+                e.preventDefault(); 
+                e.stopPropagation();
+                if (currentMenu !== null) return; 
+                
+                const control = e.currentTarget;
+                const label = control.getAttribute('data-label');
+                control.pressTime = Date.now();
+                control.isTap = true;
+                
+                handleVisualPress(control, true);
+                if (['Up', 'Down', 'Left', 'Right'].includes(label)) {
+                    const dpadArmH = document.querySelector('.dpad-h');
+                    const dpadArmV = document.querySelector('.dpad-v');
+                    if (label === 'Left' || label === 'Right') dpadArmH?.classList.add('pressed-arm');
+                    if (label === 'Up' || label === 'Down') dpadArmV?.classList.add('pressed-arm');
+                }
+                handleVirtualPress(label, true, true); 
+            };
+
+            const releaseHandler = (e) => {
+                if (!isAuthReady) return; 
+                if (currentMenu !== null) return; 
+                
+                const control = e.currentTarget;
+                const label = control.getAttribute('data-label');
+                handleVirtualPress(label, false, true); 
+                handleVisualPress(control, false);
+                
+                if (['Select', 'Start'].includes(label) && control.isTap) {
+                    const duration = Date.now() - (control.pressTime || 0);
+                    if (duration < TAP_THRESHOLD_MS) {
+                        if (label === 'Select') toggleUploadMenu(); 
+                        else if (label === 'Start') toggleKeyBindingMenu(); 
+                    }
+                }
+                control.isTap = false;
+                
+                if (['Up', 'Down', 'Left', 'Right'].includes(label)) {
+                    const dpadArmH = document.querySelector('.dpad-h');
+                    const dpadArmV = document.querySelector('.dpad-v');
+                    const isHorizontalHeld = virtualKeyStates['Left'] || virtualKeyStates['Right'];
+                    const isVerticalHeld = virtualKeyStates['Up'] || virtualKeyStates['Down'];
+
+                    if (label === 'Left' || label === 'Right') {
+                         if (!isHorizontalHeld) dpadArmH?.classList.remove('pressed-arm');
+                    }
+                    if (label === 'Up' || label === 'Down') {
+                         if (!isVerticalHeld) dpadArmV?.classList.remove('pressed-arm');
+                    }
+                }
+            };
+            
+            gameControls.forEach(control => {
+                control.addEventListener('mousedown', pressHandler);
+                control.addEventListener('touchstart', pressHandler, { passive: false });
+                control.addEventListener('mouseup', releaseHandler);
+                control.addEventListener('touchend', releaseHandler);
+                control.addEventListener('touchcancel', releaseHandler);
+                control.addEventListener('click', (e) => e.stopPropagation());
+            });
+            
+            document.getElementById('btn-close-key-map')?.addEventListener('click', toggleKeyBindingMenu);
+            document.getElementById('btn-close-upload')?.addEventListener('click', toggleUploadMenu);
+            document.getElementById('file-input')?.addEventListener('change', handleFileUpload);
+            document.getElementById('btn-cancel-key-select')?.addEventListener('click', hideKeySelection);
+            document.getElementById('close-install')?.addEventListener('click', () => {
+                document.getElementById('install-prompt').style.display = 'none';
+            });
+
+            window.addEventListener('keydown', handleGlobalKey);
+            window.addEventListener('keyup', handleGlobalKey);
+        }
+        
+        function checkStandalone() {
+            const isStandalone = window.navigator.standalone || window.matchMedia('(display-mode: standalone)').matches;
+            const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+
+            if (isIOS && !isStandalone) {
+                setTimeout(() => {
+                    document.getElementById('install-prompt').style.display = 'flex';
+                }, 2000);
+            }
+        }
+
+        // New Smart Fullscreen Scaling
+        function scaleConsole() {
+            const wrapper = document.getElementById('console-wrapper');
+            const gbcBody = document.getElementById('gbc-body');
+            if (!wrapper || !gbcBody) return;
+
+            // Define the visual width of the console design (buttons + screen width reference)
+            const designWidth = 440; 
+            
+            const windowWidth = window.innerWidth;
+            const windowHeight = window.innerHeight;
+            
+            // 1. Calculate the scale needed to make the width of the console fit the screen width perfectly.
+            // We use '1' as the multiplier to fill the width.
+            const scale = windowWidth / designWidth;
+            
+            // 2. Apply the scale transform to the wrapper
+            wrapper.style.transform = `scale(${scale})`;
+            
+            // 3. IMPORTANT: Calculate the height required for the inner container so that 
+            //    after scaling, it equals the window height.
+            //    (windowHeight / scale) gives us the "unscaled" height needed to fill the screen.
+            const requiredHeight = windowHeight / scale;
+            
+            // 4. Set the height on the GBC body
+            gbcBody.style.height = `${requiredHeight}px`;
+        }
+        
+        window.onload = function() {
+            initFirebase();
+            setupControlListeners();
+            scaleConsole(); 
+            window.addEventListener('resize', scaleConsole);
+            window.addEventListener('orientationchange', scaleConsole);
+            
+            if (window.visualViewport) {
+                window.visualViewport.addEventListener('resize', scaleConsole);
+            }
+            
+            checkStandalone();
+        };
+    </script>
+</body>
+</html>

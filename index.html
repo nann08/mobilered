@@ -2,56 +2,92 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <!-- Viewport for robust mobile scaling and safe area handling -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     
     <!-- iOS PWA Meta Tags -->
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-title" content="Nann Boy">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="theme-color" content="#991b1b"> <!-- Darker Red Theme for status bar -->
+    <meta name="theme-color" content="#7f1d1d">
     
     <title>Nann Emulator</title>
 
+    <!-- UTILITY: JSZip for handling .zip ROMs -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+
+    <!-- PWA Setup Script -->
     <script>
-        // Define the single Base64 PNG string for the console icon here.
-        // This ensures consistency and uses the high-resolution image for all icons.
-        // The Base64 string represents a 512x512 PNG image of the console.
-        const ICON_BASE64 = 'iVBORw0KGgoAAAANSUhEUgAAAMAAAADACAYAAAEg+pWNAAAAAXNSR0IArs4c6QAAJzNJREFUeF7tnXnYJdW5v1/n4/nOe+/eB2CBECCAECAQSEBCcgmQ0UkkkpJmS48995aE7t2V9d6+Kq835+P5+D5/MvP/q4W00y3pQx0A+vRup7r23nsvzXvuve/mPjWq+GzF2rXL9R5w9u2cK5w9e9eQ0+7q1bX1b28/90m58h9mN7F+v9i9mN378/NfJ/M4u3/L9bW65w/4nFj16n379f82d/9mN3/u53j27Z+X1235+22339d/v4/v+v5fT/v2/Lp9f/t/fXf5/+3f71fX11+f/n//3w+vX35+//+v//v1y/u/36/fX/7//7+5f/n36//p/+36+/Xf5/f/t/f3P/N/vn++f3b/j9/fXz+/f77fP3/+v3z8/P/6+fP/38/vH59f/j8/vj++v/x8f/j/8fH7y+f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f7t+4CgAAEOl/Wk0AAAAASUVORK5CYII='
+        (function() {
+            // PWA ICONS
+            const ICON_BASE64 = 'iVBORw0KGgoAAAANSUhEUgAAAMAAAADACAYAAAEg+pWNAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAAyJpVFh0WE1MOmNvbS5hZG9iZS54bXAAAAAAADw/eHBhY2tldCBiZWdpbj0i77u/IiBpZD0iVzVNME1wQ2VoaUh6cmVTek5UY3prYzlkIj8+/Pvo88/gAAAJZSURBVHja7Nw9SstQGIBh8/tD0U1wFO7A3biZtXQPt7C2sLNxB07O4A4cFDqYQJtCUgT1POF7A4EkJ/zk5GFvR0dHR2fW6/V6fXl92Ww2X5fL5buPj4/vbrfb5+Fw+DydTp+m0+nz9XrtE4n7/f4z/X6/X6/X6/vj8fg1xvi62WxeZ7PZ12w2+57NZl+32+334XD4MpvNvnq93rd6vX6YTCbfp9Pp13a7/ZzP51/r9fqx1+t9rdfrh+l0+j2fzz9ns9nPfD7/ms/nP4fD4dtsNvtardbP4/H4Yz6ff0+n08/ZbPaz2Wx+1uv1w2Qy+ZpOp5+z2exns9n8rNfrh8lk8jWdTj9ns9nPZrP5Wa/XD5PJ5Gs6nX7OZrOfzWbzs16vHyaTydf/6fR7Pp9/zGazn/l8/jWfz38Oh8O32Wz2tVqtH4B/wAAAAAABAAAAAQAAAAEAAAAAAQAAAAEAAAAAAQAAAAEAAAAAAQAAAAEAAAAAAQAAAAEAAAAAAQAAAAEAAAAAAQAAAAEAAAAAAQAAAAEAAAAAAQAAAAEAAAAAAQAAAAEAAAAAAQAAAAEAAAAAAQAAAAEAAAAAAQAAAAEAAAAAAQAAAAEAAAAAAQAAAAEAAAAAAQAAAAEAAAAAAQAAAAEAAAAAAQAAAAEAAAAAAQAAAAEAAAAAAQAAAAEAAAAAAQAAAAEAAAAAAQAAAAEAAAAAAQAAAAEAAAAAAQAAAAEAAAAAAQAAwD8CDAAh9QZ882j32AAAAABJRU5ErkJggg==';
+            const iconUrl = `data:image/png;base64,${ICON_BASE64}`;
+
+            const linkIcon = document.createElement('link');
+            linkIcon.rel = 'apple-touch-icon';
+            linkIcon.href = iconUrl;
+            document.head.appendChild(linkIcon);
+
+            const linkFav32 = document.createElement('link');
+            linkFav32.rel = 'icon';
+            linkFav32.type = 'image/png';
+            linkFav32.sizes = '32x32';
+            linkFav32.href = iconUrl;
+            document.head.appendChild(linkFav32);
+
+            const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+
+            if (!isIOS) {
+                const manifest = {
+                    "name": "Nann Boy",
+                    "short_name": "NannBoy",
+                    "start_url": ".",
+                    "display": "standalone",
+                    "background_color": "#7f1d1d",
+                    "theme_color": "#7f1d1d",
+                    "orientation": "portrait",
+                    "icons": [{ "src": iconUrl, "sizes": "192x192", "type": "image/png" }]
+                };
+                const linkManifest = document.createElement('link');
+                linkManifest.rel = 'manifest';
+                linkManifest.href = `data:application/json;base64,${btoa(JSON.stringify(manifest))}`;
+                document.head.appendChild(linkManifest);
+            }
+
+            // PERFORMANCE WARNING SUPPRESSION
+            const originalWarn = console.warn;
+            console.warn = function(...args) {
+                if (args[0] && typeof args[0] === 'string' && (args[0].includes('performance') || args[0].includes('AudioContext'))) return;
+                originalWarn.apply(console, args);
+            };
+        })();
     </script>
-
-    <!-- CRITICAL ICON LINKS: Adding sizes and cache-busting (?v=3) to force refresh -->
-    
-    <!-- PWA/iOS Home Screen Icon (Required size hint for iOS Add to Home Screen) -->
-    <link rel="apple-touch-icon" sizes="180x180" id="apple-icon" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMAAAADACAYAAAEg+pWNAAAAAXNSR0IArs4c6QAAJzNJREFUeF7tnXnYJdW5v1/n4/nOe+/eB2CBECCAECAQSEBCcgmQ0UkkkpJmS48995aE7t2V9d6+Kq835+P5+D5/MvP/q4W00y3pQx0A+vRup7r23nsvzXvuve/mPjWq+GzF2rXL9R5w9u2cK5w9e9eQ0+7q1bX1b28/90m58h9mN7F+v9i9mN378/NfJ/M4u3/L9bW65w/4nFj16n379f82d/9mN3/u53j27Z+X1235+22339d/v4/v+v5fT/v2/Lp9f/t/fXf5/+3f71fX11+f/n//3w+vX35+//+v//v1y/u/36/fX/7//7+5f/n36//p/+36+/Xf5/f/t/f3P/N/vn++f3b/j9/fXz+/f77fP3/+v3z8/P/6+fP/38/vH59f/j8/vj++v/x8f/j/8fH7y+f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f7t+4CgAAEOl/Wk0AAAAASUVORK5CYII=">
-
-    <!-- Standard Favicons (Desktop/Bookmarks) with type, sizes, and cache-buster -->
-    <link rel="icon" type="image/png" sizes="32x32" id="icon-32" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMAAAADACAYAAAEg+pWNAAAAAXNSR0IArs4c6QAAJzNJREFUeF7tnXnYJdW5v1/n4/nOe+/eB2CBECCAECAQSEBCcgmQ0UkkkpJmS48995aE7t2V9d6+Kq835+P5+D5/MvP/q4W00y3pQx0A+vRup7r23nsvzXvuve/mPjWq+GzF2rXL9R5w9u2cK5w9e9eQ0+7q1bX1b28/90m58h9mN7F+v9i9mN378/NfJ/M4u3/L9bW65w/4nFj16n379f82d/9mN3/u53j27Z+X1235+22339d/v4/v+v5fT/v2/Lp9f/t/fXf5/+3f71fX11+f/n//3w+vX35+//+v//v1y/u/36/fX/7//7+5f/n36//p/+36+/Xf5/f/t/f3P/N/vn++f3b/j9/fXz+/f77fP3/+v3z8/P/6+fP/38/vH59f/j8/vj++v/x8f/j/8fH7y+f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f7t+4CgAAEOl/Wk0AAAAASUVORK5CYII="?v=3">
-    <link rel="icon" type="image/png" sizes="16x16" id="icon-16" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMAAAADACAYAAAEg+pWNAAAAAXNSR0IArs4c6QAAJzNJREFUeF7tnXnYJdW5v1/n4/nOe+/eB2CBECCAECAQSEBCcgmQ0UkkkpJmS48995aE7t2V9d6+Kq835+P5+D5/MvP/q4W00y3pQx0A+vRup7r23nsvzXvuve/mPjWq+GzF2rXL9R5w9u2cK5w9e9eQ0+7q1bX1b28/90m58h9mN7F+v9i9mN378/NfJ/M4u3/L9bW65w/4nFj16n379f82d/9mN3/u53j27Z+X1235+22339d/v4/v+v5fT/v2/Lp9f/t/fXf5/+3f71fX11+f/n//3w+vX35+//+v//v1y/u/36/fX/7//7+5f/n36//p/+36+/Xf5/f/t/f3P/N/vn++f3b/j9/fXz+/f77fP3/+v3z8/P/6+fP/38/vH59f/j8/vj++v/x8f/j/8fH7y+f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f376/f7t+4CgAAEOl/Wk0AAAAASUVORK5CYII="?v=3">
-    
-    <!-- PWA Manifest reference (Crucial for Chrome/Android icon discovery) -->
-    <link rel="manifest" id="pwa-manifest" href="data:application/json;base64,eyJpY29ucyI6W3sic2l6ZXMiOiIxODAxeDE4MCIsImdpZCI6IjYwNTVkZjU3LTIzMDUtNDg2Mi04ZGNlLTA2ZTBkOTVkZjg1YiIsImxhbmd1YWdlIjoiZW4tdXMiLCJ3ZWJwLWhpZ2gtZGVuc2l0eSI6ImRhdGE6aW1hZ2UvcG5nO2Jhc2U2NCx..."}">
 
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
     
     <style>
-        /* Global box model reset */
+        /* Global Reset & Touch Safety */
         *, *::before, *::after {
             box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+            -webkit-touch-callout: none;
+            user-select: none;
         }
 
         :root {
-            --screen-color: #9bbc0f;
+            --screen-color: #ffffff;
             --screen-shadow: #0f380f;
             --safe-top: env(safe-area-inset-top, 20px);
             --safe-bottom: env(safe-area-inset-bottom, 20px);
             
-            /* Metallic Red Palette */
+            /* Dynamic Theme Variables - Default Red */
             --console-main: #E83942;
             --console-dark: #b91c1c;
-            --console-light: #f87171;
-            --bg-color: #7f1d1d; /* Dark background to make console pop */
+            --bg-color: #7f1d1d;
+
+            /* Dynamic Button Colors */
+            --btn-color: #1c1c1c;
+            --dpad-color: #1c1c1c;
         }
         
         @keyframes led-glow {
@@ -66,9 +102,10 @@
             margin: 0;
             padding: 0;
             overscroll-behavior: none;
-            position: fixed; 
+            position: fixed;
             overflow: hidden;
             background-color: var(--bg-color); 
+            transition: background-color 0.3s ease;
         }
 
         body {
@@ -83,6 +120,7 @@
             touch-action: none;
             margin: 0;
             padding: 0;
+            transition: background-color 0.3s ease;
         }
 
         #console-wrapper {
@@ -90,37 +128,23 @@
             will-change: transform;
             display: flex;
             justify-content: center;
+            transform: translate3d(0,0,0);
         }
 
         .gbc-body {
-            /* Fixed width for reference layout */
             --console-width: 440px; 
-
-            /* METALLIC GRADIENT BACKGROUND */
-            background: linear-gradient(145deg, var(--console-main) 0%, #d32f2f 60%, var(--console-dark) 100%);
-            
+            background: linear-gradient(145deg, var(--console-main) 0%, var(--console-dark) 100%);
             width: var(--console-width); 
-            /* Height is set dynamically by JS */
-            
-            /* RESTORED SHAPE */
             border-radius: 20px 20px 60px 20px;
-            
-            /* METALLIC DEPTH SHADOWS */
-            box-shadow: 
-                /* Outer drop shadow to separate from background */
-                0 20px 50px rgba(0,0,0,0.5),
-                /* Inner highlight for 3D metallic edge */
-                inset 2px 2px 5px rgba(255,255,255,0.4),
-                inset -5px -5px 15px rgba(0,0,0,0.2);
-
+            box-shadow: 0 20px 40px rgba(0,0,0,0.5), inset 2px 2px 5px rgba(255,255,255,0.3);
             position: relative;
             display: flex;
             flex-direction: column;
             align-items: center;
-            
-            /* Padding accounts for safe area + original spacing */
             padding-top: calc(30px + var(--safe-top)); 
             padding-bottom: var(--safe-bottom);
+            contain: content; 
+            transition: background 0.3s ease;
         }
 
         .gbc-screen-lens {
@@ -129,15 +153,14 @@
             height: 310px;
             border-radius: 15px 15px 50px 15px;
             padding: 20px 30px;
-            box-shadow: inset 0px 0px 20px rgba(0,0,0,0.9),
-                        inset 2px 2px 5px rgba(0,0,0,0.6),
-                        0 5px 10px rgba(0,0,0,0.3); /* Drop shadow for lens */
+            box-shadow: inset 0px 0px 15px rgba(0,0,0,0.8);
             display: flex;
             flex-direction: column;
             align-items: center;
             position: relative;
             flex-shrink: 0; 
             z-index: 10;
+            transform: translate3d(0,0,0);
         }
 
         .lens-branding {
@@ -172,39 +195,49 @@
             align-items: center;
             justify-content: center;
             position: relative; 
-            
-            &::before {
-                content: '';
-                position: absolute;
-                top: 0;
-                left: 0;
-                width: 100%;
-                height: 100%;
-                background: 
-                    repeating-linear-gradient(to bottom, 
-                        rgba(0,0,0,0.1) 0px, 
-                        rgba(0,0,0,0.1) 1px, 
-                        transparent 1px, 
-                        transparent 2px
-                    ),
-                    repeating-linear-gradient(to right, 
-                        rgba(0,0,0,0.05) 0px, 
-                        rgba(0,0,0,0.05) 1px, 
-                        transparent 1px, 
-                        transparent 2px
-                    );
-                pointer-events: none;
-                z-index: 5;
-            }
+            transform: translate3d(0,0,0);
+            backface-visibility: hidden;
+            contain: paint; 
         }
         
-        iframe {
+        /* Scanlines - Z-Index 200 to cover menus */
+        .lcd-screen::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: 
+                repeating-linear-gradient(to bottom, 
+                    rgba(0,0,0,0.05) 0px, 
+                    rgba(0,0,0,0.05) 1px, 
+                    transparent 1px, 
+                    transparent 2px
+                ),
+                repeating-linear-gradient(to right, 
+                    rgba(0,0,0,0.02) 0px, 
+                    rgba(0,0,0,0.02) 1px, 
+                    transparent 1px, 
+                    transparent 2px
+                );
+            pointer-events: none;
+            z-index: 200;
+            will-change: transform;
+        }
+        
+        /* Game Container Styles */
+        iframe, canvas#rom-canvas {
             width: 100%;
             height: 100%;
             border: none;
-            background-color: transparent; 
+            background-color: #000; 
+            display: none; 
+            will-change: transform; 
+            image-rendering: pixelated; 
         }
         
+        /* Menus */
         .menu-ui {
             position: absolute;
             top: 0;
@@ -212,7 +245,7 @@
             width: 100%;
             height: 100%;
             background-color: white; 
-            padding: 20px; 
+            padding: 12px; 
             display: none;
             flex-direction: column;
             align-items: center;
@@ -220,21 +253,99 @@
             z-index: 100;
         }
 
-        #file-input { display: none; }
+        #start-screen {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 20;
+            text-align: center;
+            color: #000000;
+            background-color: var(--screen-color); /* Fix: Ensure visible bg */
+        }
+
+        .nann-pill {
+            border: 3px solid #000000;
+            border-radius: 50px;
+            padding: 4px 24px;
+            display: inline-block;
+            margin-bottom: 20px;
+            background: transparent;
+        }
+
+        .nann-logo-text {
+            font-family: 'Inter', sans-serif;
+            font-weight: 900;
+            font-size: 28px;
+            color: #000000;
+            letter-spacing: 1px;
+            line-height: 1;
+        }
+
+        /* Menu Button Styles */
+        .menu-btn {
+            width: 90%; 
+            padding: 8px 0;
+            margin: 4px 0; 
+            background-color: #f3f4f6;
+            border: 2px solid #d1d5db;
+            border-radius: 8px;
+            font-weight: bold;
+            font-size: 13px;
+            color: #374151;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .menu-btn:active {
+            background-color: #e5e7eb;
+            transform: scale(0.98);
+        }
+        
+        /* Theme Bubbles */
+        .theme-option {
+            display: flex;
+            align-items: center;
+            width: 100%;
+            padding: 8px; 
+            margin: 4px 0;
+            border: 1px solid #eee;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+        .theme-preview {
+            width: 24px; 
+            height: 24px;
+            border-radius: 50%;
+            margin-right: 15px;
+            border: 2px solid rgba(0,0,0,0.1);
+        }
+
+        #file-input-html, #file-input-rom { display: none; }
 
         .upload-label {
-            display: inline-flex;
+            display: flex;
             align-items: center;
-            padding: 12px 24px;
+            justify-content: center;
+            width: 100%;
+            padding: 10px; 
             background-color: #dc2626; 
             color: white;
             border-radius: 8px;
             cursor: pointer;
             font-weight: 600;
+            font-size: 13px;
+            margin-bottom: 8px;
             transition: background-color 0.2s, box-shadow 0.2s;
             box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
         }
-        .upload-label:hover { background-color: #b91c1c; }
+        .upload-label.rom-label {
+            background-color: #2563eb;
+        }
+        .upload-label:hover { opacity: 0.9; }
 
         .nann-brand {
             font-family: 'Inter', sans-serif;
@@ -252,358 +363,204 @@
             width: 100%;
             flex-grow: 1; 
             position: relative;
+            transform: translate3d(0,0,0);
         }
 
-        /* --- SPEAKER VENTS (New) --- */
         .speaker-grille {
-            position: absolute;
-            bottom: 40px; /* Aligned with bottom corner curve */
-            right: 25px;
-            display: flex;
-            gap: 8px;
-            transform: rotate(-25deg);
-            z-index: 10;
+            position: absolute; bottom: 40px; right: 25px;
+            display: flex; gap: 8px; transform: rotate(-25deg); z-index: 10;
         }
         .vent-slot {
-            width: 8px;
-            height: 60px;
-            background-color: rgba(0,0,0,0.25); /* Dark recessed look */
+            width: 8px; height: 60px;
+            background-color: rgba(0,0,0,0.25);
             border-radius: 4px;
-            box-shadow: 
-                inset 2px 2px 4px rgba(0,0,0,0.6), /* Inner shadow depth */
-                1px 1px 0 rgba(255,255,255,0.15); /* Highlight edge */
+            box-shadow: inset 2px 2px 4px rgba(0,0,0,0.6), 1px 1px 0 rgba(255,255,255,0.15);
         }
 
-        /* --- D-PAD Styles --- */
         .dpad {
-            position: absolute;
-            top: 40px; 
-            left: 40px;
-            width: 130px;
-            height: 130px;
+            position: absolute; top: 40px; left: 40px; width: 130px; height: 130px;
         }
-        .dpad-cross {
-            width: 100%;
-            height: 100%;
-            position: relative;
-        }
+        .dpad-cross { width: 100%; height: 100%; position: relative; }
+        
         .dpad-arm {
-            background-color: #1c1c1c; 
-            position: absolute;
-            border-radius: 6px;
-            box-shadow: 
-                inset 2px 2px 4px rgba(255,255,255,0.2), 
-                inset -2px -2px 4px rgba(0,0,0,0.8),    
-                2px 4px 6px rgba(0,0,0,0.4); /* Casting shadow on body */
-            transition: transform 0.1s, box-shadow 0.1s; 
-            will-change: transform, box-shadow; 
+            background-color: var(--dpad-color); 
+            position: absolute; border-radius: 6px;
+            box-shadow: 2px 4px 6px rgba(0,0,0,0.4); 
+            transition: transform 0.05s; 
+            will-change: transform;
+            contain: content;
+            transform: translate3d(0,0,0);
+            backface-visibility: hidden;
         }
+        
+        .dpad-arm::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            border-radius: 6px;
+            box-shadow: inset 2px 2px 4px rgba(255,255,255,0.2), inset -2px -2px 4px rgba(0,0,0,0.8);
+            pointer-events: none;
+        }
+
         .dpad-arm.pressed-arm {
-            transform: translateY(2px) !important;
-            box-shadow: 
-                inset 2px 2px 4px rgba(255,255,255,0.1), 
-                inset -2px -2px 4px rgba(0,0,0,0.8),    
-                0 1px 2px rgba(0,0,0,0.4); 
+            transform: translateY(2px) translate3d(0,0,0) !important;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.4); 
         }
         .dpad-h { width: 130px; height: 40px; top: 45px; left: 0; }
         .dpad-v { width: 40px; height: 130px; left: 45px; top: 0; }
+        
         .dpad-center {
-            position: absolute; width: 40px; height: 40px; background-color: #1c1c1c; top: 45px; left: 45px; z-index: 10;
+            position: absolute; 
+            width: 40px; 
+            height: 40px; 
+            background-color: var(--dpad-color); 
+            top: 45px; 
+            left: 45px; 
+            z-index: 15;
+            border-radius: 4px; 
+            background: radial-gradient(circle at center, var(--dpad-color) 60%, var(--dpad-color) 100%);
         }
+        
         .dpad-center::after {
-            content: ''; position: absolute; top: 5px; left: 5px; width: 30px; height: 30px; border-radius: 50%; background: radial-gradient(circle, #2a2a2a 0%, #1c1c1c 80%); opacity: 1;
+            content: ''; 
+            position: absolute; 
+            top: 6px; left: 6px; 
+            width: 28px; height: 28px; 
+            border-radius: 50%; 
+            background: radial-gradient(circle, rgba(0,0,0,0.2) 0%, var(--dpad-color) 70%);
+            box-shadow: inset 1px 1px 2px rgba(0,0,0,0.8), 1px 1px 0 rgba(255,255,255,0.1);
         }
+        
         .dpad-btn { 
-            position: absolute; width: 45px; height: 45px; z-index: 20; cursor: pointer; -webkit-tap-highlight-color: transparent; 
-            transition: background-color 0.1s;
+            position: absolute; width: 55px; height: 55px; z-index: 20; cursor: pointer;
+            will-change: transform; 
         }
-        .dpad-btn.pressed {
-            background-color: rgba(255, 255, 255, 0.05); 
-        }
+        .dpad-btn.pressed { background-color: rgba(255, 255, 255, 0.05); border-radius: 50%; }
+        .dpad-up { top: -5px; left: 37px; } .dpad-down { bottom: -5px; left: 37px; } 
+        .dpad-left { top: 37px; left: -5px; } .dpad-right { top: 37px; right: -5px; }
 
-        .dpad-up { top: 0; left: 42px; } .dpad-down { bottom: 0; left: 42px; } .dpad-left { top: 42px; left: 0; } .dpad-right { top: 42px; right: 0; }
-
-        /* --- Action Buttons (A/B) --- */
         .action-buttons {
             position: absolute; top: 40px; right: 30px; width: 150px; height: 80px; transform: rotate(-20deg);
         }
-        .btn-round, .btn-util {
+        .btn-round {
             width: 60px; height: 60px; 
-            background-color: #1c1c1c; 
+            background-color: var(--btn-color); 
             border-radius: 50%; 
-            display: flex; 
-            align-items: center; 
-            justify-content: center;
-            cursor: pointer; 
-            position: absolute; 
-            user-select: none; 
-            -webkit-tap-highlight-color: transparent; 
-            transition: transform 0.1s, box-shadow 0.1s;
-            box-shadow: 
-                inset 3px 3px 6px rgba(255,255,255,0.2), 
-                inset -3px -3px 6px rgba(0,0,0,0.8), 
-                3px 5px 8px rgba(0,0,0,0.4); /* Button shadow */
-            color: rgba(255,255,255,0.1); 
-            font-size: 24px;
-            font-weight: 900;
-            font-family: sans-serif;
-            text-shadow: -1px -1px 0px rgba(0,0,0,0.5); 
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer; position: absolute; 
+            transition: transform 0.05s, box-shadow 0.05s;
+            box-shadow: inset 3px 3px 6px rgba(255,255,255,0.2), inset -3px -3px 6px rgba(0,0,0,0.8), 3px 5px 8px rgba(0,0,0,0.4);
+            color: rgba(255,255,255,0.1); font-size: 24px; font-weight: 900;
+            will-change: transform; 
+            contain: content;
+            transform: translate3d(0,0,0);
+            backface-visibility: hidden;
         }
-        .btn-round.pressed, .btn-util.pressed {
-            transform: translateY(3px) !important; 
-            box-shadow: 
-                inset 3px 3px 8px rgba(0,0,0,0.6), 
-                inset -1px -1px 2px rgba(255,255,255,0.1), 
-                0 1px 2px rgba(0,0,0,0.4); 
+        .btn-round.pressed {
+            transform: translateY(3px) translate3d(0,0,0) !important; 
+            box-shadow: inset 3px 3px 8px rgba(0,0,0,0.6), inset -1px -1px 2px rgba(255,255,255,0.1), 0 1px 2px rgba(0,0,0,0.4); 
         }
         .btn-b { bottom: 0; left: 0; } 
         .btn-a { top: 0; right: 0; }
         
-        /* --- Meta Buttons --- */
         .meta-buttons {
             position: absolute; bottom: 60px; left: 50%; transform: translateX(-50%); display: flex; gap: 30px; 
         }
         .btn-pill {
-            width: 70px; height: 18px; background-color: #4b5563; border-radius: 12px; transform: rotate(-25deg);
-            box-shadow: 
-                inset 1px 1px 2px rgba(255,255,255,0.2), 
-                inset -1px -1px 2px rgba(0,0,0,0.8),    
-                2px 3px 4px rgba(0,0,0,0.3); 
-            cursor: pointer; -webkit-tap-highlight-color: transparent; transition: transform 0.1s, box-shadow 0.1s;
+            width: 70px; height: 18px; background-color: #4b5563; border-radius: 12px; 
+            box-shadow: inset 1px 1px 2px rgba(255,255,255,0.2), inset -1px -1px 2px rgba(0,0,0,0.8), 2px 3px 4px rgba(0,0,0,0.3); 
+            cursor: pointer; 
+            transition: transform 0.05s, box-shadow 0.05s;
+            transform: rotate(-25deg) translate3d(0,0,0);
+            will-change: transform;
+            contain: content;
         }
         .btn-pill.pressed {
-            transform: rotate(-25deg) translateY(2px);
-            box-shadow: 
-                inset 2px 2px 4px rgba(0,0,0,0.6), 
-                0 1px 1px rgba(0,0,0,0.3); 
+            transform: rotate(-25deg) translateY(2px) translate3d(0,0,0);
+            box-shadow: inset 2px 2px 4px rgba(0,0,0,0.6), 0 1px 1px rgba(0,0,0,0.3); 
         }
         
-        .meta-label, .btn-util-label {
-            font-size: 11px; 
-            color: rgba(0,0,0,0.7); /* Slightly softer black for metallic look */
-            text-align: center; 
-            font-weight: 900; 
-            letter-spacing: 1px; 
-            user-select: none;
-            font-family: 'Courier New', Courier, monospace; 
-            text-shadow: 1px 1px 0 rgba(255,255,255,0.2); /* Engraved highlight */
-        }
-        
-        .meta-label { margin-top: 10px; transform: rotate(-25deg); }
-        .btn-util-label { margin-top: 5px; }
-        
-        .utility-buttons {
-            position: absolute; bottom: 150px; width: 100%; display: flex; justify-content: space-between; padding: 0 40px;
-            display: none; 
+        .meta-label {
+            font-size: 11px; color: rgba(0,0,0,0.7); font-weight: 900; letter-spacing: 1px;
+            font-family: 'Courier New', Courier, monospace; text-shadow: 1px 1px 0 rgba(255,255,255,0.2);
+            margin-top: 10px; transform: rotate(-25deg); text-align: center;
         }
 
-        .util-btn-group { display: flex; flex-direction: column; align-items: center; }
-        .btn-util { width: 50px; height: 50px; position: relative; }
-        
-        .virtual-key-btn {
-            padding: 10px;
-            background-color: #f0f4f8;
-            border: 2px solid #ccc;
-            border-radius: 8px;
-            text-align: center;
-            font-weight: bold;
-            cursor: pointer;
-            transition: background-color 0.1s;
-        }
-        .virtual-key-btn:hover { background-color: #e2e8f0; }
-        
-        .binding-row {
-            display: flex;
-            justify-content: space-between;
-            width: 250px;
-            padding: 8px 0;
-            border-bottom: 1px solid #eee;
-        }
-        
-        .binding-key {
-            padding: 2px 8px;
-            background-color: #eee;
-            border-radius: 4px;
-            cursor: pointer;
-            font-family: monospace;
-            min-width: 50px;
-            text-align: center;
-        }
-        
-        .binding-key.active-binding {
-            background-color: #fca5a5; 
-            color: #b91c1c; 
-            box-shadow: 0 0 5px #fca5a5;
-        }
-
-        /* --- Install Prompt Styles --- */
         #install-prompt {
-            position: fixed;
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 90%;
-            max-width: 400px;
-            background: white;
-            padding: 20px;
-            border-radius: 12px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
-            z-index: 1000;
-            display: none; /* Hidden by default */
-            flex-direction: column;
-            align-items: center;
-            text-align: center;
-            border: 2px solid #3b82f6;
-            animation: slideUp 0.5s ease-out;
+            position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); width: 90%; max-width: 400px;
+            background: white; padding: 20px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+            z-index: 1000; display: none; flex-direction: column; align-items: center; text-align: center;
+            border: 2px solid #3b82f6; animation: slideUp 0.5s ease-out;
         }
         @keyframes slideUp {
             from { transform: translate(-50%, 100%); opacity: 0; }
             to { transform: translate(-50%, 0); opacity: 1; }
         }
-        .install-icon {
-            font-size: 24px;
-            margin-bottom: 10px;
-        }
-        .install-text {
-            color: #1f2937;
-            font-size: 14px;
-            margin-bottom: 15px;
-        }
-        .share-icon-img {
-            width: 20px;
-            height: 20px;
-            vertical-align: middle;
-            display: inline-block;
-            margin: 0 5px;
-        }
-        #close-install {
-            position: absolute;
-            top: 5px;
-            right: 10px;
-            font-weight: bold;
-            color: #9ca3af;
-            cursor: pointer;
-        }
+        .install-icon { font-size: 24px; margin-bottom: 10px; }
+        .install-text { color: #1f2937; font-size: 14px; margin-bottom: 15px; }
+        /* FIXED: Force size on share icon to prevent it from blowing up */
+        .share-icon-img { width: 20px !important; height: 20px !important; vertical-align: middle; display: inline-block; margin: 0 5px; }
+        #close-install { position: absolute; top: 5px; right: 10px; font-weight: bold; color: #9ca3af; cursor: pointer; }
         
+        #toast-notification {
+            position: absolute; bottom: 80px; left: 50%; transform: translateX(-50%);
+            background-color: #1f2937; color: white; padding: 4px 10px; border-radius: 9999px;
+            font-size: 0.75rem; font-weight: bold; opacity: 0; pointer-events: none; transition: opacity 0.3s; z-index: 300;
+        }
+        /* Debug Console */
+        #debug-console { position: absolute; bottom: 0; left: 0; right: 0; height: 100px; background: rgba(0,0,0,0.9); color: #00ff00; font-family: monospace; font-size: 10px; padding: 5px; overflow-y: scroll; z-index: 2000; display: none; pointer-events: none; }
+        .debug-error { color: #ff5555; font-weight: bold; }
+        .debug-warn { color: #ffaa00; }
+        .debug-info { color: #88ccff; }
     </style>
 </head>
 <body oncontextmenu="return false;">
 
-    <!-- Install Prompt for iOS -->
     <div id="install-prompt">
         <div id="close-install">✕</div>
         <div class="install-icon">📲</div>
         <div class="font-bold text-lg mb-2">Install App</div>
-        <div class="install-text">
-            To install this app on your iPhone:<br>
-            1. Tap the <strong>Share</strong> button <svg class="share-icon-img" viewBox="0 0 50 50" fill="none" stroke="#007AFF" stroke-width="4"><path d="M25 5L25 35 M15 15L25 5L35 15 M10 25V40H40V25"/></svg><br>
-            2. Scroll down and tap <strong>"Add to Home Screen"</strong>
-        </div>
+        <div class="install-text">To install Nann Boy on iOS:<br>1. Tap <strong>Share</strong> <svg class="share-icon-img" viewBox="0 0 50 50" fill="none" stroke="#007AFF" stroke-width="4" width="20" height="20"><path d="M25 5L25 35 M15 15L25 5L35 15 M10 25V40H40V25"/></svg><br>2. Tap <strong>"Add to Home Screen"</strong></div>
     </div>
 
     <div id="console-wrapper">
         <div class="gbc-body" id="gbc-body">
-            
             <div class="gbc-screen-lens">
-                <div class="lens-branding">
-                    <div class="power-led" id="power-led"></div> 
-                    <div class="text-xs text-zinc-400 font-bold tracking-wider">BATTERY</div>
-                </div>
-                
+                <div class="lens-branding"><div class="power-led" id="power-led"></div><div class="text-xs text-zinc-400 font-bold tracking-wider">BATTERY</div></div>
                 <div class="lcd-screen" id="lcd-screen">
-                    <div id="loading-overlay" class="text-white text-center">
-                        <svg class="animate-spin h-5 w-5 text-white inline-block mr-2 -mt-1" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                        </svg>
-                        Loading...
+                    <div id="loading-overlay" class="text-white text-center absolute flex flex-col items-center justify-center" style="z-index: 30;">
+                        <svg class="animate-spin h-6 w-6 text-white mb-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                        <span id="loading-text">Initializing...</span>
                     </div>
-                    
+                    <div id="debug-console"></div>
+                    <div id="start-screen"><div class="nann-pill"><div class="nann-logo-text">NANN BOY</div></div></div>
                     <iframe id="game-iframe" src="about:blank" allow="keyboard; game" referrerpolicy="no-referrer"></iframe>
-                    
-                    <!-- Key Binding Menu -->
-                    <div id="key-binding-menu" class="menu-ui">
-                        <h2 class="text-xl font-bold mb-4 text-gray-800">Key Bindings</h2>
-                        <div id="bindings-list" class="max-h-48 overflow-y-auto w-full flex flex-col items-center"></div>
-                        <button id="btn-close-key-map" class="mt-4 px-6 py-2 bg-red-600 text-white rounded-lg shadow-lg hover:bg-red-700 transition">Close Menu</button>
-                    </div>
-
-                    <!-- Virtual Keypad for Mobile Binding -->
-                    <div id="key-selection-modal" class="menu-ui" style="display: none; z-index: 300;">
-                        <h2 class="text-xl font-bold mb-4 text-gray-800">Select Key for <span id="binding-label-display" class="text-red-600"></span></h2>
-                        <div id="virtual-keypad" class="grid grid-cols-4 gap-4 p-4 max-w-sm overflow-y-auto" style="max-height: 70%;">
-                            <!-- Keys injected by script -->
-                        </div>
-                        <button id="btn-cancel-key-select" class="mt-4 px-6 py-2 bg-gray-600 text-white rounded-lg shadow-lg hover:bg-gray-700 transition">Cancel</button>
-                    </div>
-
-                    <!-- Upload Menu -->
-                    <div id="upload-menu" class="menu-ui">
-                        <h2 class="text-xl font-bold mb-6 text-gray-800">Load Game ROM</h2>
-                        <input type="file" id="file-input" accept=".html,text/html">
-                        <label for="file-input" class="upload-label mb-4">
-                            <svg class="w-5 h-5 inline-block mr-2 -mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
-                            Choose .html File
-                        </label>
-                        <p id="file-status" class="text-sm text-gray-600 mb-8 text-center px-4">Only local HTML files are supported.</p>
-                        <button id="btn-close-upload" class="px-6 py-2 bg-gray-600 text-white rounded-lg shadow-lg hover:bg-gray-700 transition">Back to Game</button>
-                    </div>
-                    
+                    <canvas id="rom-canvas"></canvas>
+                    <div id="main-menu" class="menu-ui"><h2 class="text-lg font-bold mb-3 text-gray-800 tracking-wider">MENU</h2><div class="menu-btn" id="btn-menu-load">LOAD GAME</div><div class="menu-btn" id="btn-menu-controls">CONTROLS</div><div class="menu-btn" id="btn-menu-style">CHANGE STYLE</div><button id="btn-close-main-menu" class="mt-3 px-6 py-2 bg-red-600 text-white rounded-lg shadow-lg hover:bg-red-700 transition text-sm font-bold">Cancel</button></div>
+                    <div id="start-menu" class="menu-ui"><h2 class="text-lg font-bold mb-3 text-gray-800 tracking-wider">PAUSE</h2><div class="text-xs text-center text-gray-500 mb-2">Use in-game saves.</div><button id="btn-close-start-menu" class="mt-3 px-6 py-2 bg-red-600 text-white rounded-lg shadow-lg hover:bg-red-700 transition text-sm font-bold">Resume</button></div>
+                    <div id="styles-menu" class="menu-ui"><h2 class="text-xl font-bold mb-4 text-gray-800">STYLES</h2><div class="w-full max-h-64 overflow-y-auto px-4">
+                        <div class="theme-option" data-theme="nannboy"><div class="theme-preview" style="background: linear-gradient(145deg, #f3f4f6, #9ca3af); position: relative;"><div style="position: absolute; width: 8px; height: 8px; background: #800000; border-radius: 50%; bottom: 2px; right: 2px;"></div></div><span class="font-bold text-gray-700">Nann Boy</span></div>
+                        <div class="theme-option" data-theme="red"><div class="theme-preview" style="background: linear-gradient(145deg, #E83942, #b91c1c);"></div><span class="font-bold text-gray-700">Original Red</span></div>
+                        <div class="theme-option" data-theme="purple"><div class="theme-preview" style="background: linear-gradient(145deg, #7c3aed, #4c1d95);"></div><span class="font-bold text-gray-700">Atomic Purple</span></div>
+                        <div class="theme-option" data-theme="glacier"><div class="theme-preview" style="background: linear-gradient(145deg, #a5f3fc, #0891b2);"></div><span class="font-bold text-gray-700">Glacier Blue</span></div>
+                        <div class="theme-option" data-theme="pink"><div class="theme-preview" style="background: linear-gradient(145deg, #f472b6, #db2777);"></div><span class="font-bold text-gray-700">Berry Pink</span></div>
+                        <div class="theme-option" data-theme="green"><div class="theme-preview" style="background: linear-gradient(145deg, #84cc16, #4d7c0f);"></div><span class="font-bold text-gray-700">Leaf Green</span></div>
+                        <div class="theme-option" data-theme="orange"><div class="theme-preview" style="background: linear-gradient(145deg, #f97316, #c2410c);"></div><span class="font-bold text-gray-700">June Orange</span></div>
+                        <div class="theme-option" data-theme="white"><div class="theme-preview" style="background: linear-gradient(145deg, #f3f4f6, #9ca3af);"></div><span class="font-bold text-gray-700">Polar White</span></div>
+                        <div class="theme-option" data-theme="black"><div class="theme-preview" style="background: linear-gradient(145deg, #27272a, #000000);"></div><span class="font-bold text-gray-700">Midnight Black</span></div>
+                    </div><button id="btn-back-styles" class="mt-4 px-6 py-2 bg-gray-600 text-white rounded-lg shadow-lg hover:bg-gray-700 transition">Back</button></div>
+                    <div id="key-binding-menu" class="menu-ui"><h2 class="text-xl font-bold mb-4 text-gray-800">Controls</h2><div id="bindings-list" class="max-h-48 overflow-y-auto w-full flex flex-col items-center"></div><button id="btn-close-key-map" class="mt-4 px-6 py-2 bg-red-600 text-white rounded-lg shadow-lg hover:bg-red-700 transition">Close</button></div>
+                    <div id="key-selection-modal" class="menu-ui" style="display: none; z-index: 300;"><h2 class="text-xl font-bold mb-4 text-gray-800">Map <span id="binding-label-display" class="text-red-600"></span></h2><div id="virtual-keypad" class="grid grid-cols-5 gap-2 p-2 max-w-sm overflow-y-auto" style="max-height: 70%;"></div><button id="btn-cancel-key-select" class="mt-4 px-6 py-2 bg-gray-600 text-white rounded-lg shadow-lg hover:bg-red-700 transition">Cancel</button></div>
+                    <div id="upload-menu" class="menu-ui" style="padding: 10px;"><h2 class="text-lg font-bold mb-3 text-gray-800">LOAD GAME</h2><input type="file" id="file-input-html" accept=".html,text/html"><label for="file-input-html" class="upload-label">LOAD HTML (WEB)</label><input type="file" id="file-input-rom" accept=".gb,.gbc,.zip,.gba"><label for="file-input-rom" class="upload-label rom-label">LOAD ROM (.ZIP/.GBA)</label><p id="file-status" class="text-xs text-gray-600 mb-3 text-center px-4 mt-1">Supports GBA/GB/GBC</p><button id="btn-close-upload" class="px-6 py-1 bg-gray-600 text-white rounded-lg shadow-lg hover:bg-gray-700 transition text-sm font-bold">Cancel</button></div>
+                    <div id="toast-notification">GAME SAVED</div>
                 </div>
             </div>
-
             <div class="nann-brand">NANN BOY</div>
-
             <div class="controls-area">
-                <!-- SPEAKER VENTS (Bottom Right) -->
-                <div class="speaker-grille">
-                    <div class="vent-slot"></div>
-                    <div class="vent-slot"></div>
-                    <div class="vent-slot"></div>
-                    <div class="vent-slot"></div>
-                    <div class="vent-slot"></div>
-                    <div class="vent-slot"></div>
-                </div>
-
-                <div class="dpad">
-                    <div class="dpad-cross">
-                        <div class="dpad-arm dpad-h"></div>
-                        <div class="dpad-arm dpad-v"></div>
-                        <div class="dpad-center"></div>
-                        <div class="dpad-btn dpad-up" data-label="Up"></div>
-                        <div class="dpad-btn dpad-down" data-label="Down"></div>
-                        <div class="dpad-btn dpad-left" data-label="Left"></div>
-                        <div class="dpad-btn dpad-right" data-label="Right"></div>
-                    </div>
-                </div>
-
-                <div class="action-buttons">
-                    <div class="btn-round btn-b" id="btn-b" data-label="B">B</div>
-                    <div class="btn-round btn-a" id="btn-a" data-label="A">A</div>
-                </div>
-                
-                <div class="utility-buttons" style="display: none;"> 
-                    <div class="util-btn-group">
-                        <div class="btn-util" id="btn-load-rom-menu" data-label="Load Menu">F</div>
-                        <div class="util-btn-label">LOAD</div>
-                    </div>
-                    
-                    <div class="util-btn-group">
-                        <div class="btn-util" id="btn-key-map-menu" data-label="Key Map">K</div>
-                        <div class="util-btn-label">MAP</div>
-                    </div>
-                </div>
-
-                <div class="meta-buttons">
-                    <div class="flex flex-col items-center">
-                        <div class="btn-pill" id="btn-select" data-label="Select"></div>
-                        <div class="meta-label">SELECT</div>
-                    </div>
-                    <div class="flex flex-col items-center">
-                        <div class="btn-pill" id="btn-start" data-label="Start"></div>
-                        <div class="meta-label">START</div>
-                    </div>
-                </div>
+                <div class="speaker-grille"><div class="vent-slot"></div><div class="vent-slot"></div><div class="vent-slot"></div><div class="vent-slot"></div><div class="vent-slot"></div><div class="vent-slot"></div></div>
+                <div class="dpad"><div class="dpad-cross"><div class="dpad-arm dpad-h"></div><div class="dpad-arm dpad-v"></div><div class="dpad-center"></div><div class="dpad-btn dpad-up" data-label="Up"></div><div class="dpad-btn dpad-down" data-label="Down"></div><div class="dpad-btn dpad-left" data-label="Left"></div><div class="dpad-btn dpad-right" data-label="Right"></div></div></div>
+                <div class="action-buttons"><div class="btn-round btn-b" id="btn-b" data-label="B">B</div><div class="btn-round btn-a" id="btn-a" data-label="A">A</div></div>
+                <div class="meta-buttons"><div class="flex flex-col items-center"><div class="btn-pill" id="btn-select" data-label="Select"></div><div class="meta-label">SELECT</div></div><div class="flex flex-col items-center"><div class="btn-pill" id="btn-start" data-label="Start"></div><div class="meta-label">START</div></div></div>
             </div>
         </div>
     </div>
@@ -612,13 +569,20 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
 
-        // IMPORTANT: Inject Base64 string into link tags for cache-busting
-        document.getElementById('apple-icon').href = `data:image/png;base64,${ICON_BASE64}`;
-        document.getElementById('icon-32').href = `data:image/png;base64,${ICON_BASE64}?v=3`;
-        document.getElementById('icon-16').href = `data:image/png;base64,${ICON_BASE64}?v=3`;
-        // The PWA manifest link is static for simplicity as it's not strictly needed for this app.
+        // DEBUG SYSTEM
+        function debugLog(msg, type='info') {
+            const consoleEl = document.getElementById('debug-console');
+            if (consoleEl) {
+                consoleEl.style.display = 'block';
+                const entry = document.createElement('div');
+                entry.textContent = `> ${msg}`;
+                entry.className = `debug-${type}`;
+                consoleEl.appendChild(entry);
+                consoleEl.scrollTop = consoleEl.scrollHeight;
+            }
+            console.log(`[Emulator] ${msg}`);
+        }
 
-        // Check if environment variables exist
         const inCanvasEnvironment = typeof __firebase_config !== 'undefined';
         const appId = inCanvasEnvironment ? __app_id : 'default-app-id';
         const firebaseConfig = inCanvasEnvironment ? JSON.parse(__firebase_config) : null;
@@ -626,466 +590,310 @@
 
         let auth;
         let userId = null;
+        let gameMode = 'html'; 
+        let currentRomName = 'unknown_game'; 
+        let emulatorInitialized = false;
 
         let keyMap = {
-            'Up': { key: 'w', code: 'KeyW', keyCode: 87 },
-            'Down': { key: 's', code: 'KeyS', keyCode: 83 },
-            'Left': { key: 'a', code: 'KeyA', keyCode: 65 },
-            'Right': { key: 'f', code: 'KeyF', keyCode: 70 }, 
-            'A': { key: ' ', code: 'Space', keyCode: 32 }, 
-            'B': { key: 'd', code: 'KeyD', keyCode: 68 }, 
+            'Up': { key: 'ArrowUp', code: 'ArrowUp', keyCode: 38 },
+            'Down': { key: 'ArrowDown', code: 'ArrowDown', keyCode: 40 },
+            'Left': { key: 'ArrowLeft', code: 'ArrowLeft', keyCode: 37 },
+            'Right': { key: 'ArrowRight', code: 'ArrowRight', keyCode: 39 }, 
+            'A': { key: 'x', code: 'KeyX', keyCode: 88 },  
+            'B': { key: 'z', code: 'KeyZ', keyCode: 90 },  
             'Start': { key: 'Enter', code: 'Enter', keyCode: 13 },
-            'Select': { key: 'e', code: 'KeyE', keyCode: 69 },
+            'Select': { key: 'Backspace', code: 'Backspace', keyCode: 8 },
         };
         
         const keyMapStorageKey = `emulator-keymap-${appId}`;
+        const themeStorageKey = `emulator-theme-${appId}`;
+        
         let currentMenu = null; 
         let activeBindingLabel = null;
-
-        const virtualKeys = [
-            { key: 'w', code: 'KeyW', display: 'W' },
-            { key: 'a', code: 'KeyA', display: 'A' },
-            { key: 's', code: 'KeyS', display: 'S' },
-            { key: 'd', code: 'KeyD', display: 'D' },
-            { key: ' ', code: 'Space', display: 'SPACE', keyCode: 32 },
-            { key: 'Enter', code: 'Enter', display: 'ENTER', keyCode: 13 },
-            { key: 'j', code: 'KeyJ', display: 'J' },
-            { key: 'k', code: 'KeyK', display: 'K' },
-            { key: 'l', code: 'KeyL', display: 'L' },
-            { key: 'x', code: 'KeyX', display: 'X' },
-            { key: 'z', code: 'KeyZ', display: 'Z' },
-            { key: 'f', code: 'KeyF', display: 'F' },
-            { key: 'e', code: 'KeyE', display: 'E' },
-            { key: '1', code: 'Digit1', display: '1' },
-            { key: '2', code: 'Digit2', display: '2' },
-            { key: '3', code: 'Digit3', display: '3' },
-            { key: '4', code: 'Digit4', display: '4' },
-        ];
-        
         let virtualKeyStates = {};
         let isAuthReady = false;
 
+        let audioCtx = null;
+        function initAudio() {
+            if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+        }
+        function playHapticSound() {
+            if (!audioCtx) return;
+            const t = audioCtx.currentTime;
+            const osc = audioCtx.createOscillator(); const gain = audioCtx.createGain();
+            osc.connect(gain); gain.connect(audioCtx.destination);
+            osc.type = 'square'; osc.frequency.setValueAtTime(1200, t); osc.frequency.exponentialRampToValueAtTime(600, t + 0.01);
+            gain.gain.setValueAtTime(0.03, t); gain.gain.exponentialRampToValueAtTime(0.001, t + 0.01);
+            osc.start(t); osc.stop(t + 0.01);
+            const osc2 = audioCtx.createOscillator(); const gain2 = audioCtx.createGain();
+            osc2.connect(gain2); gain2.connect(audioCtx.destination);
+            osc2.type = 'triangle'; osc2.frequency.setValueAtTime(200, t); osc2.frequency.exponentialRampToValueAtTime(50, t + 0.05);
+            gain2.gain.setValueAtTime(0.08, t); gain2.gain.exponentialRampToValueAtTime(0.001, t + 0.05);
+            osc2.start(t); osc2.stop(t + 0.05);
+        }
+
+        function applyTheme(themeName) {
+            const root = document.documentElement;
+            let mainColor = '#E83942'; let darkColor = '#b91c1c'; let bgColor = '#7f1d1d'; let btnColor = '#1c1c1c'; let dpadColor = '#1c1c1c';
+            if (themeName === 'purple') { mainColor = '#7c3aed'; darkColor = '#4c1d95'; bgColor = '#4c1d95'; }
+            else if (themeName === 'glacier') { mainColor = '#a5f3fc'; darkColor = '#0891b2'; bgColor = '#164e63'; }
+            else if (themeName === 'pink') { mainColor = '#f472b6'; darkColor = '#db2777'; bgColor = '#831843'; }
+            else if (themeName === 'green') { mainColor = '#84cc16'; darkColor = '#4d7c0f'; bgColor = '#14532d'; }
+            else if (themeName === 'orange') { mainColor = '#f97316'; darkColor = '#c2410c'; bgColor = '#7c2d12'; }
+            else if (themeName === 'white') { mainColor = '#f3f4f6'; darkColor = '#9ca3af'; bgColor = '#374151'; }
+            else if (themeName === 'black') { mainColor = '#27272a'; darkColor = '#18181b'; bgColor = '#09090b'; }
+            else if (themeName === 'nannboy') { mainColor = '#f3f4f6'; darkColor = '#9ca3af'; bgColor = '#374151'; btnColor = '#800000'; dpadColor = '#800000'; }
+            root.style.setProperty('--console-main', mainColor); root.style.setProperty('--console-dark', darkColor);
+            root.style.setProperty('--bg-color', bgColor); root.style.setProperty('--btn-color', btnColor);
+            root.style.setProperty('--dpad-color', dpadColor);
+            localStorage.setItem(themeStorageKey, themeName);
+        }
+        function loadTheme() { const savedTheme = localStorage.getItem(themeStorageKey); if (savedTheme) applyTheme(savedTheme); }
+
         async function initFirebase() {
+            loadTheme();
             const loadingOverlay = document.getElementById('loading-overlay');
-            
             if (!inCanvasEnvironment || !firebaseConfig || Object.keys(firebaseConfig).length === 0) {
-                console.warn("Firebase configuration not found. Running in local/deployed mode.");
-                loadingOverlay.style.display = 'none';
-                isAuthReady = true;
-                loadKeyMap(); 
-                return;
+                loadingOverlay.style.display = 'none'; isAuthReady = true; loadKeyMap(); return;
             }
-
             try {
-                const app = initializeApp(firebaseConfig);
-                auth = getAuth(app);
-                
-                if (initialAuthToken) {
-                    await signInWithCustomToken(auth, initialAuthToken);
-                } else {
-                    await signInAnonymously(auth);
-                }
-                
-                onAuthStateChanged(auth, (user) => {
-                    userId = user ? user.uid : null;
-                    isAuthReady = true;
-                    loadKeyMap();
-                    setTimeout(() => {
-                        loadingOverlay.style.display = 'none';
-                    }, 500);
-                });
-            } catch (error) {
-                console.error("Firebase Auth Error:", error);
-                loadingOverlay.innerHTML = "Authentication failed.";
-            }
+                const app = initializeApp(firebaseConfig); auth = getAuth(app);
+                if (initialAuthToken) await signInWithCustomToken(auth, initialAuthToken); else await signInAnonymously(auth);
+                onAuthStateChanged(auth, (user) => { userId = user ? user.uid : null; isAuthReady = true; loadKeyMap(); loadingOverlay.style.display = 'none'; });
+            } catch (error) { console.error("Auth Error:", error); loadingOverlay.innerHTML = "Offline Mode"; setTimeout(() => loadingOverlay.style.display = 'none', 1000); }
         }
 
-        function loadKeyMap() {
-            const storedMap = localStorage.getItem(keyMapStorageKey);
-            if (storedMap) {
-                try { keyMap = JSON.parse(storedMap); } catch (e) { console.error(e); }
-            }
-            renderBindings();
-        }
-
-        function saveKeyMap() {
-            localStorage.setItem(keyMapStorageKey, JSON.stringify(keyMap));
-            renderBindings();
-        }
-
-        function generateBindingRow(label) {
-            const mappedKey = keyMap[label];
-            const displayKey = mappedKey ? (mappedKey.key === ' ' ? 'SPACE' : mappedKey.key.toUpperCase()) : 'N/A';
-            return `<div class="binding-row"><span class="font-semibold">${label}:</span><span class="binding-key binding-target" data-label="${label}" id="binding-key-${label}">${displayKey}</span></div>`;
-        }
-
+        function loadKeyMap() { const storedMap = localStorage.getItem(keyMapStorageKey); if (storedMap) { try { keyMap = JSON.parse(storedMap); } catch (e) { } } renderBindings(); }
+        function saveKeyMap() { localStorage.setItem(keyMapStorageKey, JSON.stringify(keyMap)); renderBindings(); }
         function renderBindings() {
             const bindingsList = document.getElementById('bindings-list');
             if (bindingsList) {
-                bindingsList.innerHTML = Object.keys(keyMap).map(generateBindingRow).join('');
-                bindingsList.querySelectorAll('.binding-target').forEach(span => {
-                    span.addEventListener('click', () => startKeyBinding(span.getAttribute('data-label')));
-                });
+                bindingsList.innerHTML = Object.keys(keyMap).map(label => {
+                    const mappedKey = keyMap[label]; const displayKey = mappedKey ? (mappedKey.key === ' ' ? 'SPACE' : mappedKey.key.toUpperCase()) : 'N/A';
+                    return `<div class="binding-row"><span class="font-semibold">${label}:</span><span class="binding-key binding-target" data-label="${label}" id="binding-key-${label}">${displayKey}</span></div>`;
+                }).join('');
+                bindingsList.querySelectorAll('.binding-target').forEach(span => { span.addEventListener('click', () => startKeyBinding(span.getAttribute('data-label'))); });
             }
         }
 
         function handleGlobalKey(e) {
-            if (!isAuthReady) return;
-
-            if (currentMenu !== null && e.type === 'keydown') {
-                if (e.key === "Escape") {
-                    if (currentMenu === 'keyselect') hideKeySelection();
-                    else if (currentMenu === 'keymap') toggleKeyBindingMenu();
-                    else if (currentMenu === 'upload') toggleUploadMenu();
-                    e.preventDefault();
-                    return;
-                }
-            }
-            
-            if (currentMenu !== null) { e.preventDefault(); e.stopPropagation(); return; }
-
+            if (currentMenu !== null) { if (e.key === "Escape") { if (currentMenu === 'keyselect') hideKeySelection(); else closeAllMenus(); } return; }
             const entry = Object.entries(keyMap).find(([, mappedKey]) => mappedKey.code === e.code || mappedKey.key === e.key.toLowerCase());
-
-            if (entry) {
-                const label = entry[0];
-                const isDown = e.type === 'keydown';
-                e.preventDefault();
-                e.stopPropagation();
-
-                handleVirtualPress(label, isDown, true); 
-                
-                if (['Up', 'Down', 'Left', 'Right'].includes(label)) {
-                    const dpadArmH = document.querySelector('.dpad-h');
-                    const dpadArmV = document.querySelector('.dpad-v');
-                    
-                    if (isDown) {
-                        if (label === 'Left' || label === 'Right') dpadArmH?.classList.add('pressed-arm');
-                        if (label === 'Up' || label === 'Down') dpadArmV?.classList.add('pressed-arm');
-                    } else {
-                        const isHorizontalHeld = virtualKeyStates['Left'] || virtualKeyStates['Right'];
-                        const isVerticalHeld = virtualKeyStates['Up'] || virtualKeyStates['Down'];
-                        if (!isHorizontalHeld) dpadArmH?.classList.remove('pressed-arm');
-                        if (!isVerticalHeld) dpadArmV?.classList.remove('pressed-arm');
-                    }
-                }
-            } 
+            if (entry) { e.preventDefault(); const label = entry[0]; const isDown = e.type === 'keydown'; handleVirtualPress(label, isDown, true); updateDpadVisuals(label, isDown); }
         }
-
-        function handleVisualPress(element, isDown) {
-            if (element) {
-                 if (isDown) element.classList.add('pressed');
-                 else element.classList.remove('pressed');
-            }
+        function updateDpadVisuals(label, isDown) {
+            if (!['Up', 'Down', 'Left', 'Right'].includes(label)) return;
+            const dpadArmH = document.querySelector('.dpad-h'); const dpadArmV = document.querySelector('.dpad-v');
+            if (isDown) { if (label === 'Left' || label === 'Right') dpadArmH?.classList.add('pressed-arm'); if (label === 'Up' || label === 'Down') dpadArmV?.classList.add('pressed-arm'); }
+            else { const isHorizontalHeld = virtualKeyStates['Left'] || virtualKeyStates['Right']; const isVerticalHeld = virtualKeyStates['Up'] || virtualKeyStates['Down']; if (!isHorizontalHeld) dpadArmH?.classList.remove('pressed-arm'); if (!isVerticalHeld) dpadArmV?.classList.remove('pressed-arm'); }
         }
-        
-        function handleVirtualPress(label, isDown, shouldSendMessage = true) {
-            const currentState = virtualKeyStates[label] || false;
-            if (isDown && !currentState) {
-                virtualKeyStates[label] = true;
-                if (shouldSendMessage) sendKey(label, true);
-            } 
-            else if (!isDown && currentState) {
-                virtualKeyStates[label] = false;
-                if (shouldSendMessage) sendKey(label, false);
-            }
+        function handleVisualPress(element, isDown) { if (element) { if (isDown) element.classList.add('pressed'); else element.classList.remove('pressed'); } }
+        function handleVirtualPress(label, isDown, shouldSendMessage = true) { const currentState = virtualKeyStates[label] || false; if (isDown !== currentState) { virtualKeyStates[label] = isDown; if (shouldSendMessage) sendKey(label, isDown); } }
+        function sendMgbaInput(label, isDown) {
+            const mapping = keyMap[label]; if (!mapping) return;
+            const event = new KeyboardEvent(isDown ? 'keydown' : 'keyup', { key: mapping.key, code: mapping.code, keyCode: mapping.keyCode, which: mapping.keyCode, bubbles: true, cancelable: true, view: window });
+            window.dispatchEvent(event); const canvas = document.getElementById('rom-canvas'); if (canvas) canvas.dispatchEvent(event);
         }
-
         function sendKey(label, isDown) {
-            const iframe = document.getElementById('game-iframe');
-            if (!iframe || !iframe.contentWindow || currentMenu !== null) return;
-            const mappedKey = keyMap[label];
-            if (!mappedKey) return;
-            iframe.contentWindow.postMessage({
-                type: isDown ? 'keydown' : 'keyup',
-                key: mappedKey.key,
-                code: mappedKey.code,
-                keyCode: mappedKey.keyCode
-            }, '*');
+            if (gameMode === 'html') {
+                const iframe = document.getElementById('game-iframe'); if (!iframe || !iframe.contentWindow || currentMenu !== null) return;
+                const mappedKey = keyMap[label]; if (!mappedKey) return;
+                iframe.contentWindow.postMessage({ type: isDown ? 'keydown' : 'keyup', key: mappedKey.key, code: mappedKey.code, keyCode: mappedKey.keyCode }, '*');
+            } else if (gameMode === 'rom') { sendMgbaInput(label, isDown); }
         }
 
-        function startKeyBinding(label) {
-            activeBindingLabel = label;
-            document.getElementById(`binding-key-${label}`).classList.add('active-binding');
-            showKeySelection(label);
-        }
-
+        function startKeyBinding(label) { activeBindingLabel = label; document.getElementById(`binding-key-${label}`).classList.add('active-binding'); showKeySelection(label); }
         function showKeySelection(label) {
-            currentMenu = 'keyselect';
-            document.getElementById('key-selection-modal').style.display = 'flex';
+            currentMenu = 'keyselect'; document.getElementById('key-selection-modal').style.display = 'flex';
             document.getElementById('binding-label-display').textContent = label;
-            
-            const keypad = document.getElementById('virtual-keypad');
-            keypad.innerHTML = ''; 
-
-            virtualKeys.forEach(vKey => {
-                const btn = document.createElement('div');
-                btn.className = 'virtual-key-btn';
-                btn.textContent = vKey.display;
-                const keyCode = vKey.keyCode || (vKey.key.length === 1 ? vKey.key.toUpperCase().charCodeAt(0) : undefined);
-
-                btn.addEventListener('click', () => {
-                    keyMap[label] = { key: vKey.key, code: vKey.code, keyCode: keyCode }; 
-                    saveKeyMap();
-                    hideKeySelection();
-                });
-                keypad.appendChild(btn);
-            });
+            const keypad = document.getElementById('virtual-keypad'); keypad.innerHTML = '';
+            const keys = [{k:'1',c:'Digit1',d:'1'},{k:'2',c:'Digit2',d:'2'},{k:'3',c:'Digit3',d:'3'},{k:'4',c:'Digit4',d:'4'},{k:'5',c:'Digit5',d:'5'},{k:'q',c:'KeyQ',d:'Q'},{k:'w',c:'KeyW',d:'W'},{k:'e',c:'KeyE',d:'E'},{k:'r',c:'KeyR',d:'R'},{k:'a',c:'KeyA',d:'A'},{k:'s',c:'KeyS',d:'S'},{k:'d',c:'KeyD',d:'D'},{k:'f',c:'KeyF',d:'F'},{k:'z',c:'KeyZ',d:'Z'},{k:'x',c:'KeyX',d:'X'},{k:'c',c:'KeyC',d:'C'},{k:'v',c:'KeyV',d:'V'},{k:' ',c:'Space',d:'SPACE',kc:32},{k:'Enter',c:'Enter',d:'ENTER',kc:13},{k:'ArrowUp',c:'ArrowUp',d:'↑'},{k:'ArrowDown',c:'ArrowDown',d:'↓'},{k:'ArrowLeft',c:'ArrowLeft',d:'←'},{k:'ArrowRight',c:'ArrowRight',d:'→'}];
+            keys.forEach(vKey => { const btn = document.createElement('div'); btn.className = 'virtual-key-btn'; btn.textContent = vKey.display || vKey.d; btn.addEventListener('click', () => { keyMap[label] = { key: vKey.k, code: vKey.c, keyCode: vKey.kc || (vKey.k.length===1 ? vKey.k.toUpperCase().charCodeAt(0) : 0) }; saveKeyMap(); hideKeySelection(); }); keypad.appendChild(btn); });
         }
+        function hideKeySelection() { document.getElementById(`binding-key-${activeBindingLabel}`)?.classList.remove('active-binding'); document.getElementById('key-selection-modal').style.display = 'none'; activeBindingLabel = null; currentMenu = 'keymap'; }
+        function openMenu(menuId) { document.querySelectorAll('.menu-ui').forEach(el => { if (el.id !== 'game-iframe' && el.id !== 'start-screen' && el.id !== 'rom-canvas') el.style.display = 'none'; }); const menu = document.getElementById(menuId); if (menu) { menu.style.display = 'flex'; currentMenu = menuId; if (menuId === 'key-binding-menu') renderBindings(); } }
+        function closeAllMenus() { document.querySelectorAll('.menu-ui').forEach(el => { if (el.id !== 'game-iframe' && el.id !== 'start-screen' && el.id !== 'rom-canvas') el.style.display = 'none'; }); currentMenu = null; }
+        function toggleMenu(menuId) { if (currentMenu === menuId) closeAllMenus(); else openMenu(menuId); }
         
-        function hideKeySelection() {
-            document.getElementById(`binding-key-${activeBindingLabel}`)?.classList.remove('active-binding');
-            document.getElementById('key-selection-modal').style.display = 'none';
-            activeBindingLabel = null;
-            currentMenu = 'keymap';
-        }
-
-        function toggleKeyBindingMenu() {
-            if (currentMenu === 'upload' || currentMenu === 'keyselect') return;
-            const menu = document.getElementById('key-binding-menu');
-            if (currentMenu === 'keymap') {
-                currentMenu = null;
-                menu.style.display = 'none';
-            } else {
-                currentMenu = 'keymap';
-                menu.style.display = 'flex';
-                renderBindings(); 
-            }
-        }
-
-        function toggleUploadMenu() {
-            if (currentMenu === 'keymap' || currentMenu === 'keyselect') return;
-            const menu = document.getElementById('upload-menu');
-            if (currentMenu === 'upload') {
-                currentMenu = null;
-                menu.style.display = 'none';
-            } else {
-                currentMenu = 'upload';
-                menu.style.display = 'flex';
-            }
-        }
-        
-        function handleFileUpload(event) {
-            const file = event.target.files[0];
-            const fileStatus = document.getElementById('file-status');
-            const iframe = document.getElementById('game-iframe');
-            const powerLed = document.getElementById('power-led');
-
+        function handleHtmlUpload(event) {
+            const file = event.target.files[0]; const fileStatus = document.getElementById('file-status'); const iframe = document.getElementById('game-iframe'); const romCanvas = document.getElementById('rom-canvas'); const powerLed = document.getElementById('power-led'); const startScreen = document.getElementById('start-screen');
             powerLed.classList.remove('on'); 
-
-            if (!file) { fileStatus.textContent = "No file selected."; return; }
-            if (file.type !== 'text/html' && !file.name.endsWith('.html')) { fileStatus.textContent = "Error: Please select a valid HTML file."; return; }
-
+            if (!file) return;
+            if (file.type !== 'text/html' && !file.name.endsWith('.html')) { fileStatus.textContent = "Error: Invalid HTML file."; return; }
             fileStatus.textContent = `Loading ${file.name}...`;
             const reader = new FileReader();
-
             reader.onload = function(e) {
                 let htmlContent = e.target.result;
-
-                const fitStyle = `
-                    <style>
-                        html, body {
-                            margin: 0 !important;
-                            padding: 0 !important;
-                            width: 100vw !important;
-                            height: 100vh !important;
-                            overflow: hidden !important; 
-                            background-color: transparent !important;
-                            display: flex !important;
-                            justify-content: center !important;
-                            align-items: center !important;
-                        }
-                        canvas, #game, #canvas {
-                            max-width: 100% !important;
-                            max-height: 100% !important;
-                            object-fit: contain !important;
-                            margin: auto !important;
-                        }
-                    </style>
-                `;
-
-                const bridgeScript = `
-                    <script>
-                        window.addEventListener('message', function(e) {
-                            if (e.data.type === 'keydown' || e.data.type === 'keyup') {
-                                var event = new KeyboardEvent(e.data.type, {
-                                    key: e.data.key,
-                                    code: e.data.code,
-                                    keyCode: e.data.keyCode,
-                                    which: e.data.keyCode,
-                                    bubbles: true,
-                                    cancelable: true,
-                                    view: window
-                                });
-                                document.dispatchEvent(event);
-                                window.dispatchEvent(event);
-                            }
-                        });
-                    <\/script>
-                `;
-
-                if (htmlContent.includes('</head>')) {
-                    htmlContent = htmlContent.replace('</head>', fitStyle + '</head>');
-                } else {
-                    htmlContent = fitStyle + htmlContent;
-                }
-                
-                if (htmlContent.includes('</body>')) {
-                    htmlContent = htmlContent.replace('</body>', bridgeScript + '</body>');
-                } else {
-                    htmlContent += bridgeScript;
-                }
-
-                try {
-                    const blob = new Blob([htmlContent], { type: 'text/html' });
-                    const blobUrl = URL.createObjectURL(blob);
-                    
-                    iframe.onload = () => {
-                         if (iframe.dataset.blobUrl) URL.revokeObjectURL(iframe.dataset.blobUrl);
-                         iframe.dataset.blobUrl = blobUrl;
-                         fileStatus.textContent = `Game loaded: ${file.name}`;
-                         toggleUploadMenu(); 
-                         iframe.onload = null;
-                         iframe.contentWindow.focus();
-                         powerLed.classList.add('on');
-                    };
-                    iframe.src = blobUrl;
-                } catch (error) {
-                    console.error("Failed to load:", error);
-                    fileStatus.textContent = `Error loading file: ${file.name}`;
-                }
+                const fitStyle = `<style>html,body{margin:0;padding:0;width:100vw;height:100vh;overflow:hidden;background:transparent;display:flex;justify-content:center;align-items:center;}canvas{max-width:100%;max-height:100%;object-fit:contain;transform:translateZ(0);will-change:transform;}</style>`;
+                const bridgeScript = `<script>window.addEventListener('message',function(e){if(e.data.type==='keydown'||e.data.type==='keyup'){var ev=new KeyboardEvent(e.data.type,{key:e.data.key,code:e.data.code,keyCode:e.data.keyCode,which:e.data.keyCode,bubbles:true,cancelable:true,view:window});document.dispatchEvent(ev);window.dispatchEvent(ev);}});<\/script>`;
+                htmlContent = fitStyle + htmlContent + bridgeScript;
+                try { const blob = new Blob([htmlContent], { type: 'text/html' }); const blobUrl = URL.createObjectURL(blob); iframe.onload = () => { URL.revokeObjectURL(blobUrl); closeAllMenus(); iframe.onload = null; gameMode = 'html'; iframe.style.display = 'block'; romCanvas.style.display = 'none'; startScreen.style.display = 'none'; iframe.contentWindow.focus(); powerLed.classList.add('on'); }; iframe.src = blobUrl; } catch (error) { fileStatus.textContent = "Error loading file."; }
             };
             reader.readAsText(file);
         }
 
+        // --- mGBA CORE INTEGRATION (OFFICIAL CDN) ---
+        async function loadScript(src) {
+            return new Promise((resolve, reject) => {
+                const script = document.createElement('script');
+                script.src = src; script.crossOrigin = "anonymous"; 
+                script.onload = resolve;
+                script.onerror = () => reject(new Error(`Failed to load ${src}`));
+                document.head.appendChild(script);
+            });
+        }
+
+        async function initEmulator() {
+            if (emulatorInitialized) return;
+            const romCanvas = document.getElementById('rom-canvas');
+            const loadingText = document.getElementById('loading-text');
+            if(loadingText) loadingText.innerText = "Booting...";
+            
+            // 1. Configure Module with CRITICAL locateFile fix
+            window.Module = {
+                canvas: romCanvas,
+                noInitialRun: true,
+                locateFile: function(path) {
+                    if (path.endsWith('.wasm')) return 'https://cdn.jsdelivr.net/gh/mgba-emu/mgba.js@gh-pages/mgba.wasm';
+                    return path;
+                },
+                print: (text) => debugLog(`[Core] ${text}`),
+                printErr: (text) => debugLog(`[Core Error] ${text}`, 'error'),
+                onRuntimeInitialized: function() {
+                    debugLog("Runtime Ready.");
+                    emulatorInitialized = true;
+                }
+            };
+
+            // 2. Load mGBA from JSDelivr
+            try {
+                await loadScript('https://cdn.jsdelivr.net/gh/mgba-emu/mgba.js@gh-pages/mgba.js');
+                debugLog("mGBA loaded.");
+            } catch(e) {
+                if(loadingText) loadingText.innerHTML = "Error: mGBA failed to load.";
+                throw e;
+            }
+        }
+
+        async function launchEmulator(romData, name) {
+            closeAllMenus();
+            const loadingOverlay = document.getElementById('loading-overlay');
+            if(loadingOverlay) {
+                loadingOverlay.style.display = 'flex';
+                if(loadingOverlay.innerText.includes('Error')) loadingOverlay.innerHTML = `<span id="loading-text">Starting Engine...</span>`;
+            }
+
+            try {
+                // Ensure emulator is booted
+                if (!emulatorInitialized) {
+                    await initEmulator();
+                    
+                    // Wait loop for runtime to catch up
+                    let attempts = 0;
+                    while (!emulatorInitialized && attempts < 100) {
+                        await new Promise(r => setTimeout(r, 100)); 
+                        attempts++;
+                    }
+                }
+                
+                if (!window.Module || !window.Module.FS) {
+                    throw new Error("Emulator core failed to initialize.");
+                }
+
+                // Wait one more cycle to ensure FS is writable
+                await new Promise(r => setTimeout(r, 50));
+
+                const fileName = 'game.gba'; // mGBA usually expects .gba extension even for GB files
+                try {
+                    try { window.Module.FS.unlink(fileName); } catch(e) {} 
+                    window.Module.FS.writeFile(fileName, new Uint8Array(romData));
+                    debugLog(`ROM Written: ${name}`);
+                } catch(e) {
+                    debugLog(`FS Write Error: ${e.message}`, 'error');
+                    throw e;
+                }
+
+                if (window.Module.callMain) {
+                    window.Module.callMain([fileName]);
+                } else {
+                    console.warn("callMain not found.");
+                }
+                
+                const romCanvas = document.getElementById('rom-canvas');
+                romCanvas.style.display = 'block';
+                document.getElementById('start-screen').style.display = 'none';
+                document.getElementById('game-iframe').style.display = 'none';
+                document.getElementById('power-led').classList.add('on');
+                if(loadingOverlay) loadingOverlay.style.display = 'none';
+
+            } catch (err) {
+                console.error(err);
+                if(loadingOverlay) {
+                    loadingOverlay.innerHTML = `<div style="font-size:12px; color:#ff5555; padding:10px;">${err.message}<br><button onclick="location.reload()" style="margin-top:10px; padding:5px;">Reload</button></div>`;
+                }
+            }
+        }
+
+        function handleRomUpload(event) {
+            const file = event.target.files[0]; const fileStatus = document.getElementById('file-status'); const powerLed = document.getElementById('power-led');
+            powerLed.classList.remove('on'); if (!file) return;
+            
+            // Accept GBA, GB, GBC, ZIP
+            const isZip = file.name.match(/\.zip$/i); 
+            const isRom = file.name.match(/\.(gba|gbc|gb)$/i);
+
+            if (!isZip && !isRom) { fileStatus.textContent = "Error: Invalid file type."; return; }
+            fileStatus.textContent = `Reading ${file.name}...`; gameMode = 'rom';
+            
+            if (isZip) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    JSZip.loadAsync(e.target.result).then(async function(zip) {
+                        const files = Object.keys(zip.files);
+                        const romCandidates = files.filter(name => { const isRom = name.match(/\.(gba|gbc|gb)$/i); const isMacJunk = name.includes('__MACOSX') || name.split('/').pop().startsWith('.'); return isRom && !isMacJunk; });
+                        if (romCandidates.length === 0) { if(fileStatus) fileStatus.textContent = "Error: No ROM found."; return; }
+                        const chosenFile = romCandidates[0];
+                        if(fileStatus) fileStatus.textContent = `Launching ${chosenFile}...`;
+                        currentRomName = chosenFile;
+                        const content = await zip.file(chosenFile).async("arraybuffer");
+                        launchEmulator(content, chosenFile);
+                    }).catch(function(err) { console.error(err); fileStatus.textContent = `Zip Error: ${err.message}`; });
+                }; reader.readAsArrayBuffer(file);
+            } else {
+                currentRomName = file.name; const reader = new FileReader();
+                reader.onload = async function(e) { launchEmulator(e.target.result, file.name); }; reader.readAsArrayBuffer(file);
+            }
+        }
+
         function setupControlListeners() {
-            const gameControls = document.querySelectorAll('.dpad-btn, .btn-round, .btn-pill');
-            const TAP_THRESHOLD_MS = 300; 
-
-            const pressHandler = (e) => {
-                if (!isAuthReady) return; 
-                e.preventDefault(); 
-                e.stopPropagation();
-                if (currentMenu !== null) return; 
-                
-                const control = e.currentTarget;
-                const label = control.getAttribute('data-label');
-                control.pressTime = Date.now();
-                control.isTap = true;
-                
-                handleVisualPress(control, true);
-                if (['Up', 'Down', 'Left', 'Right'].includes(label)) {
-                    const dpadArmH = document.querySelector('.dpad-h');
-                    const dpadArmV = document.querySelector('.dpad-v');
-                    if (label === 'Left' || label === 'Right') dpadArmH?.classList.add('pressed-arm');
-                    if (label === 'Up' || label === 'Down') dpadArmV?.classList.add('pressed-arm');
-                }
-                handleVirtualPress(label, true, true); 
+            const gameControls = document.querySelectorAll('.dpad-btn, .btn-round, .btn-pill'); const TAP_THRESHOLD_MS = 300; 
+            const handleStart = (e) => {
+                e.preventDefault(); const control = e.currentTarget; const label = control.getAttribute('data-label');
+                if (currentMenu !== null && label !== 'Start' && label !== 'Select') return;
+                initAudio(); playHapticSound(); if (navigator.vibrate) navigator.vibrate(15);
+                control.pressTime = Date.now(); control.isTap = true;
+                handleVisualPress(control, true); updateDpadVisuals(label, true); handleVirtualPress(label, true, true); 
             };
-
-            const releaseHandler = (e) => {
-                if (!isAuthReady) return; 
-                if (currentMenu !== null) return; 
-                
-                const control = e.currentTarget;
-                const label = control.getAttribute('data-label');
-                handleVirtualPress(label, false, true); 
-                handleVisualPress(control, false);
-                
-                if (['Select', 'Start'].includes(label) && control.isTap) {
-                    const duration = Date.now() - (control.pressTime || 0);
-                    if (duration < TAP_THRESHOLD_MS) {
-                        if (label === 'Select') toggleUploadMenu(); 
-                        else if (label === 'Start') toggleKeyBindingMenu(); 
-                    }
-                }
-                control.isTap = false;
-                
-                if (['Up', 'Down', 'Left', 'Right'].includes(label)) {
-                    const dpadArmH = document.querySelector('.dpad-h');
-                    const dpadArmV = document.querySelector('.dpad-v');
-                    const isHorizontalHeld = virtualKeyStates['Left'] || virtualKeyStates['Right'];
-                    const isVerticalHeld = virtualKeyStates['Up'] || virtualKeyStates['Down'];
-
-                    if (label === 'Left' || label === 'Right') {
-                         if (!isHorizontalHeld) dpadArmH?.classList.remove('pressed-arm');
-                    }
-                    if (label === 'Up' || label === 'Down') {
-                         if (!isVerticalHeld) dpadArmV?.classList.remove('pressed-arm');
-                    }
-                }
+            const handleEnd = (e) => {
+                e.preventDefault(); const control = e.currentTarget; const label = control.getAttribute('data-label');
+                handleVirtualPress(label, false, true); handleVisualPress(control, false); updateDpadVisuals(label, false);
+                if (['Select', 'Start'].includes(label) && control.isTap) { const duration = Date.now() - (control.pressTime || 0); if (duration < TAP_THRESHOLD_MS) { if (label === 'Select') toggleMenu('main-menu'); else if (label === 'Start') toggleMenu('start-menu'); } } control.isTap = false;
             };
-            
-            gameControls.forEach(control => {
-                control.addEventListener('mousedown', pressHandler);
-                control.addEventListener('touchstart', pressHandler, { passive: false });
-                control.addEventListener('mouseup', releaseHandler);
-                control.addEventListener('touchend', releaseHandler);
-                control.addEventListener('touchcancel', releaseHandler);
-                control.addEventListener('click', (e) => e.stopPropagation());
-            });
-            
-            document.getElementById('btn-close-key-map')?.addEventListener('click', toggleKeyBindingMenu);
-            document.getElementById('btn-close-upload')?.addEventListener('click', toggleUploadMenu);
-            document.getElementById('file-input')?.addEventListener('change', handleFileUpload);
-            document.getElementById('btn-cancel-key-select')?.addEventListener('click', hideKeySelection);
-            document.getElementById('close-install')?.addEventListener('click', () => {
-                document.getElementById('install-prompt').style.display = 'none';
-            });
-
-            window.addEventListener('keydown', handleGlobalKey);
-            window.addEventListener('keyup', handleGlobalKey);
+            gameControls.forEach(control => { control.addEventListener('touchstart', handleStart, { passive: false }); control.addEventListener('mousedown', handleStart); control.addEventListener('touchend', handleEnd); control.addEventListener('mouseup', handleEnd); control.addEventListener('mouseleave', handleEnd); });
+            document.getElementById('btn-close-key-map')?.addEventListener('click', () => openMenu('main-menu')); document.getElementById('btn-close-upload')?.addEventListener('click', () => openMenu('main-menu'));
+            document.getElementById('file-input-html')?.addEventListener('change', handleHtmlUpload); document.getElementById('file-input-rom')?.addEventListener('change', handleRomUpload);
+            document.getElementById('btn-cancel-key-select')?.addEventListener('click', hideKeySelection); document.getElementById('close-install')?.addEventListener('click', () => { document.getElementById('install-prompt').style.display = 'none'; });
+            document.getElementById('btn-close-main-menu')?.addEventListener('click', closeAllMenus); document.getElementById('btn-menu-load')?.addEventListener('click', () => openMenu('upload-menu'));
+            document.getElementById('btn-menu-style')?.addEventListener('click', () => openMenu('styles-menu')); document.getElementById('btn-menu-controls')?.addEventListener('click', () => openMenu('key-binding-menu')); 
+            document.getElementById('btn-close-start-menu')?.addEventListener('click', closeAllMenus); document.getElementById('btn-back-styles')?.addEventListener('click', () => openMenu('main-menu'));
+            document.querySelectorAll('.theme-option').forEach(option => { option.addEventListener('click', () => { const theme = option.getAttribute('data-theme'); applyTheme(theme); }); });
+            window.addEventListener('keydown', handleGlobalKey); window.addEventListener('keyup', handleGlobalKey);
         }
-        
-        function checkStandalone() {
-            const isStandalone = window.navigator.standalone || window.matchMedia('(display-mode: standalone)').matches;
-            const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
-
-            if (isIOS && !isStandalone) {
-                setTimeout(() => {
-                    document.getElementById('install-prompt').style.display = 'flex';
-                }, 2000);
-            }
-        }
-
-        // New Smart Fullscreen Scaling
-        function scaleConsole() {
-            const wrapper = document.getElementById('console-wrapper');
-            const gbcBody = document.getElementById('gbc-body');
-            if (!wrapper || !gbcBody) return;
-
-            // Define the visual width of the console design (buttons + screen width reference)
-            const designWidth = 440; 
-            
-            const windowWidth = window.innerWidth;
-            const windowHeight = window.innerHeight;
-            
-            // 1. Calculate the scale needed to make the width of the console fit the screen width perfectly.
-            const scale = windowWidth / designWidth;
-            
-            // 2. Apply the scale transform to the wrapper
-            wrapper.style.transform = `scale(${scale})`;
-            
-            // 3. Calculate the height required for the inner container so that 
-            //    after scaling, it equals the window height.
-            const requiredHeight = windowHeight / scale;
-            
-            // 4. Set the height on the GBC body
-            gbcBody.style.height = `${requiredHeight}px`;
-        }
-        
-        window.onload = function() {
-            initFirebase();
-            setupControlListeners();
-            scaleConsole(); 
-            window.addEventListener('resize', scaleConsole);
-            window.addEventListener('orientationchange', scaleConsole);
-            
-            if (window.visualViewport) {
-                window.visualViewport.addEventListener('resize', scaleConsole);
-            }
-            
-            checkStandalone();
-        };
+        function checkStandalone() { const isStandalone = window.navigator.standalone || window.matchMedia('(display-mode: standalone)').matches; const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream; if (isIOS && !isStandalone) setTimeout(() => { document.getElementById('install-prompt').style.display = 'flex'; }, 3000); }
+        function scaleConsole() { const wrapper = document.getElementById('console-wrapper'); const gbcBody = document.getElementById('gbc-body'); if (!wrapper || !gbcBody) return; const designWidth = 440; const windowWidth = window.innerWidth; const windowHeight = window.innerHeight; const scale = Math.min(1, windowWidth / designWidth); wrapper.style.transform = `scale(${scale})`; const requiredHeight = windowHeight / scale; gbcBody.style.height = `${requiredHeight}px`; }
+        function appMain() { initFirebase(); setupControlListeners(); scaleConsole(); window.addEventListener('resize', scaleConsole); if (window.visualViewport) window.visualViewport.addEventListener('resize', scaleConsole); checkStandalone(); }
+        if (document.readyState === 'loading') { window.addEventListener('DOMContentLoaded', appMain); } else { appMain(); }
     </script>
 </body>
 </html>

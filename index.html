@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     
-    <!-- COI Service Worker Fix: Must be the FIRST script -->
+    <!-- COI Service Worker: Essential for WASM performance -->
     <script src="coi-serviceworker.js"></script>
 
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -14,12 +14,12 @@
     <title>Nann Emulator (mGBA)</title>
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
+    
     <style>
         *, *::before, *::after { box-sizing: border-box; -webkit-tap-highlight-color: transparent; -webkit-touch-callout: none; user-select: none; }
-        :root { --screen-color: #ffffff; --screen-shadow: #0f380f; --safe-top: env(safe-area-inset-top, 20px); --safe-bottom: env(safe-area-inset-bottom, 20px); --console-main: #E83942; --console-dark: #b91c1c; --bg-color: #7f1d1d; --btn-color: #1c1c1c; --dpad-color: #1c1c1c; --text-battery: #a1a1aa; }
+        :root { --screen-color: #000000; /* Default to black to avoid white flash */ --screen-shadow: #0f380f; --safe-top: env(safe-area-inset-top, 20px); --safe-bottom: env(safe-area-inset-bottom, 20px); --console-main: #E83942; --console-dark: #b91c1c; --bg-color: #7f1d1d; --btn-color: #1c1c1c; --dpad-color: #1c1c1c; --text-battery: #a1a1aa; }
         html, body { width: 100%; height: 100%; margin: 0; padding: 0; overscroll-behavior: none; position: fixed; overflow: hidden; background-color: var(--bg-color); transition: background-color 0.3s ease; font-family: 'Inter', sans-serif; display: flex; align-items: flex-start; justify-content: center; }
         #console-wrapper { transform-origin: top center; will-change: transform; display: flex; justify-content: center; transform: translate3d(0,0,0); }
         .gbc-body { --console-width: 440px; background: linear-gradient(145deg, var(--console-main) 0%, var(--console-dark) 100%); width: var(--console-width); border-radius: 20px 20px 60px 20px; box-shadow: 0 20px 40px rgba(0,0,0,0.5), inset 2px 2px 5px rgba(255,255,255,0.3); position: relative; display: flex; flex-direction: column; align-items: center; padding-top: calc(30px + var(--safe-top)); padding-bottom: var(--safe-bottom); contain: content; transition: background 0.3s ease; }
@@ -28,98 +28,58 @@
         .power-led { width: 10px; height: 10px; background-color: #1c1c1c; border-radius: 50%; box-shadow: inset 1px 1px 2px rgba(0,0,0,0.7); transition: background-color 0.2s; }
         .power-led.on { background-color: #ff0000; box-shadow: 0 0 8px #ff3333, inset 0 0 5px rgba(255, 255, 255, 0.7); animation: led-glow 1.5s infinite alternate ease-in-out; }
         @keyframes led-glow { 0% { box-shadow: 0 0 5px #990000; opacity: 0.8; } 50% { box-shadow: 0 0 10px #ff0000; opacity: 1; } 100% { box-shadow: 0 0 5px #990000; opacity: 0.8; } }
-        .lcd-screen { background-color: var(--screen-color); width: 320px; height: 240px; box-shadow: inset 3px 3px 10px rgba(0,0,0,0.8); overflow: hidden; display: flex; align-items: center; justify-content: center; position: relative; transform: translate3d(0,0,0); backface-visibility: hidden; contain: paint; }
-        .lcd-screen::before { content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: repeating-linear-gradient(to bottom, rgba(0,0,0,0.05) 0px, rgba(0,0,0,0.05) 1px, transparent 1px, transparent 2px), repeating-linear-gradient(to right, rgba(0,0,0,0.02) 0px, rgba(0,0,0,0.02) 1px, transparent 1px, transparent 2px); pointer-events: none; z-index: 200; }
         
-        iframe { width: 100%; height: 100%; border: none; background-color: #000; display: none; }
+        /* SCREEN CONTAINER */
+        .lcd-screen { 
+            background-color: #000; /* Force black background */
+            width: 320px; height: 240px; 
+            box-shadow: inset 3px 3px 10px rgba(0,0,0,0.8); 
+            overflow: hidden; 
+            display: flex; align-items: center; justify-content: center; 
+            position: relative; 
+            transform: translate3d(0,0,0); 
+            backface-visibility: hidden; 
+            contain: paint; 
+        }
         
-        /* STATIC CANVAS FIX FOR SAFARI */
+        /* GPU ACCELERATED IFRAME */
+        iframe { 
+            width: 100%; 
+            height: 100%; 
+            border: none; 
+            background-color: #000; 
+            display: none;
+            /* iOS Performance Tweaks */
+            will-change: transform;
+            transform: translateZ(0);
+            -webkit-overflow-scrolling: touch;
+        }
+        
+        /* STATIC CANVAS */
         canvas#canvas {
-            display: none; /* Hidden by default */
-            width: 100%;
-            height: 100%;
-            image-rendering: pixelated;
-            /* Remove 'desynchronized' which breaks iOS */
-        }
-        
-        .menu-ui { 
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%; 
-            background-color: white; 
-            padding: 8px 12px;
             display: none; 
-            flex-direction: column; 
-            align-items: center; 
-            justify-content: center;
-            z-index: 100; 
-            overflow-y: auto; 
+            width: 100%; height: 100%;
+            image-rendering: pixelated;
+            background-color: #000;
         }
         
+        .menu-ui { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-color: white; padding: 8px 12px; display: none; flex-direction: column; align-items: center; justify-content: center; z-index: 100; overflow-y: auto; }
         .menu-ui h2 { margin-top: 0; margin-bottom: 6px; font-size: 16px; }
         
-        .menu-ui::-webkit-scrollbar { width: 4px; }
-        .menu-ui::-webkit-scrollbar-track { background: #f1f1f1; }
-        .menu-ui::-webkit-scrollbar-thumb { background: #ccc; border-radius: 2px; }
-
-        #start-screen { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 20; text-align: center; color: #000000; background-color: var(--screen-color); }
+        #start-screen { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 20; text-align: center; color: #000000; background-color: #ffffff; }
         .nann-pill { border: 3px solid #000000; border-radius: 50px; padding: 4px 24px; display: inline-block; margin-bottom: 20px; background: transparent; }
         .nann-logo-text { font-family: 'Inter', sans-serif; font-weight: 900; font-size: 28px; color: #000000; letter-spacing: 1px; line-height: 1; }
         
-        /* Compact Menu Buttons */
-        .menu-btn { 
-            width: 90%; 
-            padding: 5px 0;
-            margin: 2px 0;
-            background-color: #f3f4f6; 
-            border: 2px solid #d1d5db; 
-            border-radius: 6px; 
-            font-weight: bold; 
-            font-size: 12px; 
-            color: #374151; 
-            text-align: center; 
-            cursor: pointer; 
-            transition: all 0.2s; 
-            flex-shrink: 0; 
-        }
+        .menu-btn { width: 90%; padding: 5px 0; margin: 2px 0; background-color: #f3f4f6; border: 2px solid #d1d5db; border-radius: 6px; font-weight: bold; font-size: 12px; color: #374151; text-align: center; cursor: pointer; transition: all 0.2s; flex-shrink: 0; }
         .menu-btn:active { background-color: #e5e7eb; transform: scale(0.98); }
-
-        /* Compact Red Button */
-        .btn-red { 
-            margin-top: 8px; 
-            padding: 6px 20px; 
-            background-color: #dc2626; 
-            color: white; 
-            border-radius: 6px; 
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1); 
-            font-size: 12px; 
-            font-weight: bold; 
-            border: none; 
-            cursor: pointer; 
-            transition: background-color 0.2s; 
-        }
-        .btn-red:hover { background-color: #b91c1c; }
-        
-        /* Compact Back Button */
-        .btn-back { 
-            margin-top: 8px; 
-            padding: 6px 20px; 
-            background-color: #4b5563; 
-            color: white; 
-            border-radius: 6px; 
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1); 
-            font-size: 12px; 
-            font-weight: bold; 
-            border: none; 
-            cursor: pointer; 
-            transition: background-color 0.2s; 
-        }
-        .btn-back:hover { background-color: #374151; }
+        .btn-red { margin-top: 8px; padding: 6px 20px; background-color: #dc2626; color: white; border-radius: 6px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); font-size: 12px; font-weight: bold; border: none; cursor: pointer; }
+        .btn-back { margin-top: 8px; padding: 6px 20px; background-color: #4b5563; color: white; border-radius: 6px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); font-size: 12px; font-weight: bold; border: none; cursor: pointer; }
 
         .text-battery { font-size: 10px; color: var(--text-battery); font-weight: bold; letter-spacing: 0.05em; }
         .theme-option { display: flex; align-items: center; width: 100%; padding: 6px; margin: 2px 0; border: 1px solid #eee; border-radius: 6px; cursor: pointer; flex-shrink: 0; font-size: 12px; }
         .theme-preview { width: 20px; height: 20px; border-radius: 50%; margin-right: 10px; border: 2px solid rgba(0,0,0,0.1); }
         #file-input-html, #file-input-rom, #file-input-zip-web { display: none; } 
-        .upload-label { display: flex; align-items: center; justify-content: center; width: 100%; padding: 6px; background-color: #dc2626; color: white; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 12px; margin-bottom: 4px; transition: background-color 0.2s; box-shadow: 0 2px 4px -1px rgba(0, 0, 0, 0.1); flex-shrink: 0; }
-        .upload-label.rom-label { background-color: #2563eb; } .upload-label.folder-label { background-color: #16a34a; } .upload-label:hover { opacity: 0.9; }
+        
         .nann-brand { font-family: 'Inter', sans-serif; font-style: italic; font-weight: 900; color: rgba(0,0,0,0.6); font-size: 28px; letter-spacing: 1px; margin-top: 20px; margin-bottom: 10px; text-shadow: 1px 1px 0px rgba(255, 255, 255, 0.2), -1px -1px 0px rgba(0, 0, 0, 0.2); }
         .controls-area { width: 100%; flex-grow: 1; position: relative; transform: translate3d(0,0,0); }
         .speaker-grille { position: absolute; bottom: 40px; right: 25px; display: flex; gap: 8px; transform: rotate(-25deg); z-index: 10; }
@@ -153,26 +113,10 @@
         #toast-notification { position: absolute; bottom: 80px; left: 50%; transform: translateX(-50%); background-color: #1f2937; color: white; padding: 4px 10px; border-radius: 9999px; font-size: 0.75rem; font-weight: bold; opacity: 0; pointer-events: none; transition: opacity 0.3s; z-index: 300; }
         
         /* BOOT ANIMATION STYLES */
-        @keyframes bootDrop {
-            0% { transform: translateY(-50px); opacity: 0; }
-            40% { transform: translateY(0); opacity: 1; }
-            100% { transform: translateY(0); opacity: 1; }
-        }
-        .boot-logo {
-            font-family: 'Inter', sans-serif;
-            font-weight: 900;
-            font-size: 24px;
-            color: #000; /* Dark color for the logo, classic GB style */
-            letter-spacing: 2px;
-            animation: bootDrop 2s ease-out forwards;
-        }
-        @keyframes progressFill {
-            0% { width: 0%; }
-            100% { width: 100%; }
-        }
-        .animate-progress {
-            animation: progressFill 3s ease-out forwards;
-        }
+        @keyframes bootDrop { 0% { transform: translateY(-50px); opacity: 0; } 40% { transform: translateY(0); opacity: 1; } 100% { transform: translateY(0); opacity: 1; } }
+        .boot-logo { font-family: 'Inter', sans-serif; font-weight: 900; font-size: 24px; color: #000; letter-spacing: 2px; animation: bootDrop 2s ease-out forwards; }
+        @keyframes progressFill { 0% { width: 0%; } 100% { width: 100%; } }
+        .animate-progress { animation: progressFill 3s ease-out forwards; }
     </style>
 </head>
 <body oncontextmenu="return false;">
@@ -194,7 +138,7 @@
                     <canvas id="canvas" width="240" height="160"></canvas>
 
                     <!-- CUSTOM BOOT ANIMATION OVERLAY -->
-                    <div id="loading-overlay" class="absolute inset-0 flex flex-col items-center justify-center z-50" style="background-color: var(--screen-color); display: none;">
+                    <div id="loading-overlay" class="absolute inset-0 flex flex-col items-center justify-center z-50" style="background-color: #ffffff; display: none;">
                         <div class="boot-logo">NANN BOY</div>
                         <div class="mt-4">
                             <div class="w-16 h-1 bg-gray-300 rounded overflow-hidden">
@@ -206,7 +150,7 @@
                     
                     <div id="start-screen"><div class="nann-pill"><div class="nann-logo-text">NANN BOY</div></div></div>
                     
-                    <!-- Added credentialless to help with some COEP cases -->
+                    <!-- GPU Accelerated Iframe -->
                     <iframe id="game-iframe" credentialless src="about:blank" allow="autoplay; fullscreen; gamepad; accelerometer; gyroscope; clipboard-write" sandbox="allow-forms allow-pointer-lock allow-popups allow-same-origin allow-scripts" referrerpolicy="no-referrer"></iframe>
                     
                     <div id="main-menu" class="menu-ui">
@@ -298,8 +242,11 @@
         let audioCtx = null;
         function initAudio() {
             // Use 'playback' latency for mobile smooth audio
-            if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)({ latencyHint: 'playback' });
-            if (audioCtx.state === 'suspended') audioCtx.resume();
+            if (!audioCtx) {
+                const AudioContext = window.AudioContext || window.webkitAudioContext;
+                if(AudioContext) audioCtx = new AudioContext({ latencyHint: 'playback' });
+            }
+            if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
         }
         function playHapticSound() {
             if (!audioCtx) return;
@@ -571,7 +518,10 @@
                 
                 // Re-apply settings
                 if (window.Module.toggleRewind) window.Module.toggleRewind(false);
-                if (window.Module.setMainLoopTiming) window.Module.setMainLoopTiming(1, 16);
+                
+                // --- SAFARI WHITE SCREEN FIX ---
+                // Do NOT force setMainLoopTiming here if it causes freeze.
+                // Trust mGBA's default internal loop for stability on re-load.
                 
                 const canvas = document.getElementById('canvas');
                 if(canvas) canvas.style.display = 'block';
@@ -582,6 +532,11 @@
                 document.getElementById('btn-menu-exit-game').style.display = 'block';
                 
                 setTimeout(() => { if(loadingOverlay) loadingOverlay.style.display = 'none'; }, 2000);
+                
+                // Ensure audio is running
+                if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
+                if (window.Module.SDL2?.audioContext?.state === 'suspended') window.Module.SDL2.audioContext.resume();
+                
                 return;
             }
 
@@ -660,10 +615,9 @@
                          } catch(e) { }
                      }
                      
-                     // Force 16ms loop (60fps target) to avoid stutter
-                     if (Module.setMainLoopTiming) {
-                         Module.setMainLoopTiming(1, 16);
-                     }
+                     // --- SAFARI WHITE SCREEN FIX ---
+                     // REMOVED setMainLoopTiming override. 
+                     // It conflicts with WASM's loop on Safari causing the white freeze.
 
                      document.getElementById('power-led').classList.add('on');
                      document.getElementById('btn-menu-exit-game').style.display = 'block'; 
@@ -672,6 +626,8 @@
                         if(loadingOverlay) loadingOverlay.style.display = 'none';
                      }, 2000);
                      
+                     // Ensure audio is running
+                     if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
                      const audioContext = Module.SDL2?.audioContext || Module.audioContext;
                      if (audioContext && audioContext.state === 'suspended') {
                          audioContext.resume();

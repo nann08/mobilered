@@ -481,31 +481,41 @@
         function toggleMenu(menuId) { if (currentMenu === menuId) closeAllMenus(); else openMenu(menuId); }
         
         // --- GAME EXIT LOGIC ---
-        function exitGame() {
-            // 1. Hide Game Elements & Show Start Screen
-            document.getElementById('canvas').style.display = 'none';
-            document.getElementById('game-iframe').style.display = 'none';
-            document.getElementById('start-screen').style.display = 'flex';
-            
-            // 2. Hide "Exit Game" Button
-            document.getElementById('btn-menu-exit-game').style.display = 'none';
-            document.getElementById('power-led').classList.remove('on');
+        // Helper to stop current activity to free resources
+        function stopCurrentGame() {
+            // 1. Stop HTML Game
+            const iframe = document.getElementById('game-iframe');
+            iframe.src = 'about:blank'; // Clears memory
+            iframe.style.display = 'none';
 
-            // 3. Stop HTML Game
-            if (gameMode === 'html') {
-                const iframe = document.getElementById('game-iframe');
-                iframe.src = 'about:blank';
-            }
-
-            // 4. Pause ROM Game (to stop audio)
-            if (gameMode === 'rom' && window.Module && window.Module.pauseGame) {
+            // 2. Stop ROM Game
+            // Best effort to kill the loop and audio
+            if (window.Module) {
                 try {
-                    window.Module.pauseGame();
-                } catch(e) { console.error("Error pausing mGBA:", e); }
+                    if (window.Module.quitGame) window.Module.quitGame();
+                    else if (window.Module.pauseGame) window.Module.pauseGame();
+                } catch(e) { console.error("Error stopping mGBA:", e); }
             }
             
-            // Reset state
+            const canvas = document.getElementById('canvas');
+            if (canvas) {
+                // Clear the canvas to black
+                const ctx = canvas.getContext('2d');
+                if (ctx) ctx.clearRect(0, 0, canvas.width, canvas.height);
+                canvas.style.display = 'none';
+            }
+            
+            document.getElementById('power-led').classList.remove('on');
             gameMode = null;
+        }
+
+        function exitGame() {
+            stopCurrentGame();
+            
+            // Show Start Screen
+            document.getElementById('start-screen').style.display = 'flex';
+            document.getElementById('btn-menu-exit-game').style.display = 'none';
+            
             closeAllMenus();
         }
 
@@ -536,13 +546,7 @@
         // This function builds the Module object and injects the script
         async function launchMgba(romBuffer, romName) {
             closeAllMenus();
-            
-            // CLEANUP: Hide HTML Game if active
-            const iframe = document.getElementById('game-iframe');
-            if (gameMode === 'html') {
-                iframe.style.display = 'none';
-                iframe.src = 'about:blank';
-            }
+            stopCurrentGame(); // Strict Cleanup
 
             const loadingOverlay = document.getElementById('loading-overlay');
             if(loadingOverlay) {
@@ -563,6 +567,7 @@
                 const canvas = document.getElementById('canvas');
                 canvas.style.display = 'block';
                 document.getElementById('start-screen').style.display = 'none';
+                gameMode = 'rom'; // Update global mode
                 
                 // Write File
                 const ext = romName.split('.').pop();
@@ -654,6 +659,7 @@
                 if (Module.loadGame) {
                      debugLog("Calling loadGame()...");
                      Module.loadGame(safeName);
+                     gameMode = 'rom'; // Update global mode
                      
                      // Turn on LED
                      document.getElementById('power-led').classList.add('on');
@@ -678,8 +684,8 @@
 
         function handleRomUpload(event) {
             const file = event.target.files[0]; 
-            const powerLed = document.getElementById('power-led');
-            powerLed.classList.remove('on'); 
+            // Don't turn on LED yet, wait for init
+            // powerLed.classList.remove('on');  <-- Handled by stopCurrentGame
             if (!file) return;
             
             const isZip = file.name.match(/\.zip$/i); 
@@ -687,7 +693,6 @@
             const isRom = file.name.match(/\.(gb|gbc|gba)$/i); 
 
             if (!isZip && !isRom) { return; }
-            gameMode = 'rom';
             
             const processRom = (buffer, name) => {
                 launchMgba(buffer, name);
@@ -720,6 +725,9 @@
         // --- WEB ZIP / HTML HANDLERS ---
         function handleWebZipUpload(event) {
             const file = event.target.files[0]; if (!file) return;
+            
+            stopCurrentGame(); // Strict Cleanup
+
             const loadingOverlay = document.getElementById('loading-overlay');
             if(loadingOverlay) { loadingOverlay.style.display = 'flex'; loadingOverlay.innerHTML = `<span id="loading-text">Unzipping Game...</span>`; }
             const reader = new FileReader();
@@ -751,6 +759,9 @@
 
         function handleHtmlUpload(event) {
             const file = event.target.files[0]; if (!file) return;
+            
+            stopCurrentGame(); // Strict Cleanup
+
             const iframe = document.getElementById('game-iframe'); const romCanvas = document.getElementById('canvas'); const powerLed = document.getElementById('power-led'); const startScreen = document.getElementById('start-screen');
             powerLed.classList.remove('on'); 
             if (file.type !== 'text/html' && !file.name.endsWith('.html')) return;

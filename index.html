@@ -36,16 +36,17 @@
         .menu-ui { 
             position: absolute; top: 0; left: 0; width: 100%; height: 100%; 
             background-color: white; 
-            padding: 10px 12px;
+            padding: 8px 12px; /* Reduced padding */
             display: none; 
             flex-direction: column; 
             align-items: center; 
-            justify-content: flex-start; 
+            justify-content: center; /* Center vertically */
             z-index: 100; 
             overflow-y: auto; 
         }
         
-        .menu-ui h2 { margin-top: 0; margin-bottom: 8px; }
+        .menu-ui h2 { margin-top: 0; margin-bottom: 6px; font-size: 16px; } /* Compact header */
+        
         .menu-ui::-webkit-scrollbar { width: 4px; }
         .menu-ui::-webkit-scrollbar-track { background: #f1f1f1; }
         .menu-ui::-webkit-scrollbar-thumb { background: #ccc; border-radius: 2px; }
@@ -54,17 +55,61 @@
         .nann-pill { border: 3px solid #000000; border-radius: 50px; padding: 4px 24px; display: inline-block; margin-bottom: 20px; background: transparent; }
         .nann-logo-text { font-family: 'Inter', sans-serif; font-weight: 900; font-size: 28px; color: #000000; letter-spacing: 1px; line-height: 1; }
         
-        .menu-btn { width: 90%; padding: 6px 0; margin: 3px 0; background-color: #f3f4f6; border: 2px solid #d1d5db; border-radius: 8px; font-weight: bold; font-size: 13px; color: #374151; text-align: center; cursor: pointer; transition: all 0.2s; flex-shrink: 0; }
+        /* Compact Menu Buttons */
+        .menu-btn { 
+            width: 90%; 
+            padding: 5px 0; /* Reduced from 6px */
+            margin: 2px 0;  /* Reduced from 3px */
+            background-color: #f3f4f6; 
+            border: 2px solid #d1d5db; 
+            border-radius: 6px; /* Slightly tighter radius */
+            font-weight: bold; 
+            font-size: 12px; /* Slightly smaller font */
+            color: #374151; 
+            text-align: center; 
+            cursor: pointer; 
+            transition: all 0.2s; 
+            flex-shrink: 0; 
+        }
         .menu-btn:active { background-color: #e5e7eb; transform: scale(0.98); }
-        .btn-red { margin-top: 15px; padding: 8px 24px; background-color: #dc2626; color: white; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); font-size: 14px; font-weight: bold; border: none; cursor: pointer; transition: background-color 0.2s; }
+
+        /* Compact Red Button */
+        .btn-red { 
+            margin-top: 8px; /* Reduced from 15px */
+            padding: 6px 20px; 
+            background-color: #dc2626; 
+            color: white; 
+            border-radius: 6px; 
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1); 
+            font-size: 12px; 
+            font-weight: bold; 
+            border: none; 
+            cursor: pointer; 
+            transition: background-color 0.2s; 
+        }
         .btn-red:hover { background-color: #b91c1c; }
-        .btn-back { margin-top: 15px; padding: 8px 24px; background-color: #4b5563; color: white; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); font-size: 14px; font-weight: bold; border: none; cursor: pointer; transition: background-color 0.2s; }
+        
+        /* Compact Back Button */
+        .btn-back { 
+            margin-top: 8px; 
+            padding: 6px 20px; 
+            background-color: #4b5563; 
+            color: white; 
+            border-radius: 6px; 
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1); 
+            font-size: 12px; 
+            font-weight: bold; 
+            border: none; 
+            cursor: pointer; 
+            transition: background-color 0.2s; 
+        }
         .btn-back:hover { background-color: #374151; }
+
         .text-battery { font-size: 10px; color: var(--text-battery); font-weight: bold; letter-spacing: 0.05em; }
-        .theme-option { display: flex; align-items: center; width: 100%; padding: 8px; margin: 4px 0; border: 1px solid #eee; border-radius: 8px; cursor: pointer; flex-shrink: 0; }
-        .theme-preview { width: 24px; height: 24px; border-radius: 50%; margin-right: 15px; border: 2px solid rgba(0,0,0,0.1); }
+        .theme-option { display: flex; align-items: center; width: 100%; padding: 6px; margin: 2px 0; border: 1px solid #eee; border-radius: 6px; cursor: pointer; flex-shrink: 0; font-size: 12px; }
+        .theme-preview { width: 20px; height: 20px; border-radius: 50%; margin-right: 10px; border: 2px solid rgba(0,0,0,0.1); }
         #file-input-html, #file-input-rom, #file-input-zip-web { display: none; } 
-        .upload-label { display: flex; align-items: center; justify-content: center; width: 100%; padding: 8px; background-color: #dc2626; color: white; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 13px; margin-bottom: 6px; transition: background-color 0.2s; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); flex-shrink: 0; }
+        .upload-label { display: flex; align-items: center; justify-content: center; width: 100%; padding: 6px; background-color: #dc2626; color: white; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 12px; margin-bottom: 4px; transition: background-color 0.2s; box-shadow: 0 2px 4px -1px rgba(0, 0, 0, 0.1); flex-shrink: 0; }
         .upload-label.rom-label { background-color: #2563eb; } .upload-label.folder-label { background-color: #16a34a; } .upload-label:hover { opacity: 0.9; }
         .nann-brand { font-family: 'Inter', sans-serif; font-style: italic; font-weight: 900; color: rgba(0,0,0,0.6); font-size: 28px; letter-spacing: 1px; margin-top: 20px; margin-bottom: 10px; text-shadow: 1px 1px 0px rgba(255, 255, 255, 0.2), -1px -1px 0px rgba(0, 0, 0, 0.2); }
         .controls-area { width: 100%; flex-grow: 1; position: relative; transform: translate3d(0,0,0); }
@@ -133,6 +178,7 @@
                     <div id="main-menu" class="menu-ui">
                         <h2 class="text-lg font-bold mb-3 text-gray-800 tracking-wider">MENU</h2>
                         <div class="menu-btn" id="btn-menu-load-game">LOAD GAME</div>
+                        <div class="menu-btn" id="btn-menu-exit-game" style="display:none; color: #dc2626;">EXIT GAME</div>
                         <div class="menu-btn" id="btn-menu-controls">CONTROLS</div>
                         <div class="menu-btn" id="btn-menu-style">CHANGE STYLE</div>
                         <button id="btn-close-main-menu" class="btn-red">Cancel</button>
@@ -233,29 +279,46 @@
         function playHapticSound() {
             if (!audioCtx) return;
             const t = audioCtx.currentTime;
-            const osc = audioCtx.createOscillator();
-            const gain = audioCtx.createGain();
-            osc.connect(gain);
-            gain.connect(audioCtx.destination);
-            osc.type = 'triangle'; 
-            osc.frequency.setValueAtTime(600, t);
-            osc.frequency.exponentialRampToValueAtTime(300, t + 0.03);
-            gain.gain.setValueAtTime(0.15, t);
-            gain.gain.exponentialRampToValueAtTime(0.01, t + 0.03);
-            osc.start(t);
-            osc.stop(t + 0.03);
+            
+            // De-essing / Softening Filter (Lowpass)
+            const filter = audioCtx.createBiquadFilter();
+            filter.type = "lowpass";
+            filter.frequency.value = 3500; // Cut harsh highs (De-essing)
+            filter.connect(audioCtx.destination);
 
-            const osc2 = audioCtx.createOscillator();
-            const gain2 = audioCtx.createGain();
-            osc2.connect(gain2);
-            gain2.connect(audioCtx.destination);
-            osc2.type = 'sine'; 
-            osc2.frequency.setValueAtTime(150, t);
-            osc2.frequency.exponentialRampToValueAtTime(100, t + 0.1); 
-            gain2.gain.setValueAtTime(0.1, t);
-            gain2.gain.exponentialRampToValueAtTime(0.01, t + 0.1);
-            osc2.start(t);
-            osc2.stop(t + 0.1);
+            // 1. The High-Pitch "Click" (Reduced Volume)
+            const clickOsc = audioCtx.createOscillator();
+            const clickGain = audioCtx.createGain();
+            clickOsc.connect(clickGain);
+            clickGain.connect(filter);
+            
+            clickOsc.type = 'square';
+            clickOsc.frequency.setValueAtTime(1500, t);
+            clickOsc.frequency.exponentialRampToValueAtTime(1000, t + 0.01);
+            
+            // Lower volume (0.08 was 0.3)
+            clickGain.gain.setValueAtTime(0.08, t);
+            clickGain.gain.exponentialRampToValueAtTime(0.001, t + 0.02);
+            
+            clickOsc.start(t);
+            clickOsc.stop(t + 0.02);
+
+            // 2. The "Thud" (Reduced Volume)
+            const thudOsc = audioCtx.createOscillator();
+            const thudGain = audioCtx.createGain();
+            thudOsc.connect(thudGain);
+            thudGain.connect(filter);
+            
+            thudOsc.type = 'triangle';
+            thudOsc.frequency.setValueAtTime(200, t);
+            thudOsc.frequency.exponentialRampToValueAtTime(50, t + 0.05);
+            
+            // Lower volume (0.1 was 0.2)
+            thudGain.gain.setValueAtTime(0.1, t);
+            thudGain.gain.exponentialRampToValueAtTime(0.001, t + 0.05);
+            
+            thudOsc.start(t);
+            thudOsc.stop(t + 0.06);
         }
 
         function applyTheme(themeName) {
@@ -417,10 +480,42 @@
         }
         function toggleMenu(menuId) { if (currentMenu === menuId) closeAllMenus(); else openMenu(menuId); }
         
+        // --- GAME EXIT LOGIC ---
+        function exitGame() {
+            // 1. Hide Game Elements & Show Start Screen
+            document.getElementById('canvas').style.display = 'none';
+            document.getElementById('game-iframe').style.display = 'none';
+            document.getElementById('start-screen').style.display = 'flex';
+            
+            // 2. Hide "Exit Game" Button
+            document.getElementById('btn-menu-exit-game').style.display = 'none';
+            document.getElementById('power-led').classList.remove('on');
+
+            // 3. Stop HTML Game
+            if (gameMode === 'html') {
+                const iframe = document.getElementById('game-iframe');
+                iframe.src = 'about:blank';
+            }
+
+            // 4. Pause ROM Game (to stop audio)
+            if (gameMode === 'rom' && window.Module && window.Module.pauseGame) {
+                try {
+                    window.Module.pauseGame();
+                } catch(e) { console.error("Error pausing mGBA:", e); }
+            }
+            
+            // Reset state
+            gameMode = null;
+            closeAllMenus();
+        }
+
         // --- MENU LOGIC ---
         document.getElementById('btn-menu-load-game').addEventListener('click', () => { openMenu('load-game-menu'); });
         document.getElementById('btn-back-load-menu').addEventListener('click', () => { openMenu('main-menu'); });
         
+        // Exit Game Button Listener
+        document.getElementById('btn-menu-exit-game').addEventListener('click', exitGame);
+
         document.getElementById('btn-load-rom-action').addEventListener('click', () => { document.getElementById('file-input-rom').click(); });
         document.getElementById('btn-load-html-file').addEventListener('click', () => { document.getElementById('file-input-html').click(); });
         document.getElementById('btn-load-zip-web').addEventListener('click', () => { document.getElementById('file-input-zip-web').click(); });
@@ -441,6 +536,14 @@
         // This function builds the Module object and injects the script
         async function launchMgba(romBuffer, romName) {
             closeAllMenus();
+            
+            // CLEANUP: Hide HTML Game if active
+            const iframe = document.getElementById('game-iframe');
+            if (gameMode === 'html') {
+                iframe.style.display = 'none';
+                iframe.src = 'about:blank';
+            }
+
             const loadingOverlay = document.getElementById('loading-overlay');
             if(loadingOverlay) {
                 loadingOverlay.style.display = 'flex';
@@ -454,11 +557,43 @@
                     </div>`;
             }
 
-            // Cleanup previous runs if any
-            if (window.Module && window.Module.quitMgba) {
-                 try { window.Module.quitMgba(); } catch(e) {}
-                 location.reload(); 
-                 return;
+            // Reuse Module if already loaded (Smooth Switching)
+            if (window.Module && window.Module.loadGame) {
+                 // 1. Invisible Screen Fix: Use the standard ID 'canvas'
+                const canvas = document.getElementById('canvas');
+                canvas.style.display = 'block';
+                document.getElementById('start-screen').style.display = 'none';
+                
+                // Write File
+                const ext = romName.split('.').pop();
+                const safeName = 'game.' + ext;
+                
+                if (window.Module.FS) {
+                    window.Module.FS.writeFile(safeName, new Uint8Array(romBuffer));
+                } else if (typeof FS !== 'undefined') {
+                    FS.writeFile(safeName, new Uint8Array(romBuffer));
+                }
+                
+                // Resume game if it was paused
+                try {
+                    window.Module.loadGame(safeName);
+                    // Resume audio context if needed
+                    const audioContext = window.Module.SDL2?.audioContext || window.Module.audioContext;
+                    if (audioContext && audioContext.state === 'suspended') {
+                         audioContext.resume();
+                    }
+                } catch (e) {
+                    console.error("Error reusing module:", e);
+                    // Fallback to reload if reuse fails
+                    if(!confirm("Error switching games. Reload?")) return;
+                    location.reload();
+                    return;
+                }
+
+                document.getElementById('power-led').classList.add('on');
+                document.getElementById('btn-menu-exit-game').style.display = 'block'; // SHOW EXIT BUTTON
+                if(loadingOverlay) loadingOverlay.style.display = 'none';
+                return;
             }
 
             // 1. Invisible Screen Fix: Use the standard ID 'canvas'
@@ -522,6 +657,7 @@
                      
                      // Turn on LED
                      document.getElementById('power-led').classList.add('on');
+                     document.getElementById('btn-menu-exit-game').style.display = 'block'; // SHOW EXIT BUTTON
                      if(loadingOverlay) loadingOverlay.style.display = 'none';
                      
                      // Resume Audio
@@ -608,7 +744,7 @@
                     htmlContent = htmlContent.replace('<head>', '<head>' + monkeyPatchScript);
                     const finalBlob = new Blob([htmlContent], { type: 'text/html' }); const finalUrl = URL.createObjectURL(finalBlob);
                     const iframe = document.getElementById('game-iframe'); const romCanvas = document.getElementById('canvas'); const startScreen = document.getElementById('start-screen'); const powerLed = document.getElementById('power-led');
-                    iframe.onload = () => { iframe.onload = null; gameMode = 'html'; iframe.style.display = 'block'; romCanvas.style.display = 'none'; startScreen.style.display = 'none'; iframe.contentWindow.focus(); powerLed.classList.add('on'); loadingOverlay.style.display = 'none'; }; iframe.src = finalUrl;
+                    iframe.onload = () => { iframe.onload = null; gameMode = 'html'; iframe.style.display = 'block'; romCanvas.style.display = 'none'; startScreen.style.display = 'none'; iframe.contentWindow.focus(); powerLed.classList.add('on'); loadingOverlay.style.display = 'none'; document.getElementById('btn-menu-exit-game').style.display = 'block'; }; iframe.src = finalUrl;
                 }).catch(err => { console.error(err); alert("Failed to unzip game: " + err.message); loadingOverlay.style.display = 'none'; });
             }; reader.readAsArrayBuffer(file);
         }
@@ -624,7 +760,7 @@
                 const fitStyle = `<style>html,body{margin:0;padding:0;width:100vw;height:100vh;overflow:hidden;background:transparent;display:flex;justify-content:center;align-items:center;}canvas{max-width:100%;max-height:100%;object-fit:contain;transform:translateZ(0);will-change:transform;}</style>`;
                 const bridgeScript = `<script>window.addEventListener('message',function(e){if(e.data.type==='keydown'||e.data.type==='keyup'){var ev=new KeyboardEvent(e.data.type,{key:e.data.key,code:e.data.code,keyCode:e.data.keyCode,which:e.data.keyCode,bubbles:true,cancelable:true,view:window});document.dispatchEvent(ev);window.dispatchEvent(ev);}});<\/script>`;
                 htmlContent = fitStyle + htmlContent + bridgeScript;
-                try { const blob = new Blob([htmlContent], { type: 'text/html' }); const blobUrl = URL.createObjectURL(blob); iframe.onload = () => { URL.revokeObjectURL(blobUrl); closeAllMenus(); iframe.onload = null; gameMode = 'html'; iframe.style.display = 'block'; romCanvas.style.display = 'none'; startScreen.style.display = 'none'; iframe.contentWindow.focus(); powerLed.classList.add('on'); }; iframe.src = blobUrl; } catch (error) { }
+                try { const blob = new Blob([htmlContent], { type: 'text/html' }); const blobUrl = URL.createObjectURL(blob); iframe.onload = () => { URL.revokeObjectURL(blobUrl); closeAllMenus(); iframe.onload = null; gameMode = 'html'; iframe.style.display = 'block'; romCanvas.style.display = 'none'; startScreen.style.display = 'none'; iframe.contentWindow.focus(); powerLed.classList.add('on'); document.getElementById('btn-menu-exit-game').style.display = 'block'; }; iframe.src = blobUrl; } catch (error) { }
             }; reader.readAsText(file);
         }
 

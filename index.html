@@ -14,7 +14,7 @@
 
     <script>
         (function() {
-            const ICON_BASE64 = 'iVBORw0KGgoAAAANSUhEUgAAAMAAAADACAYAAAEg+pWNAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAAyJpVFh0WE1MOmNvbS5hZG9iZS54bXAAAAAAADw/eHBhY2tldCBiZWdpbj0i77u/IiBpZD0iVzVNME1wQ2VoaUh6cmVTek5UY3prYzlkIj8+/Pvo88/gAAAJZSURBVHja7Nw9SstQGIBh8/tD0U1wFO7A3biZtXQPt7C2sLNxB07O4A4cFDqYQJtCUgT1POF7A4EkJ/zk5GFvR0dHR2fW6/V6fXl92Ww2X5fL5buPj4/vbrfb5+Fw+DydTp+m0+nz9XrtE4n7/f4z/X6/X6/X6/vj8fg1xvi62WxeZ7PZ12w2+57NZl+32+334XD4MpvNvnq93rd6vX6YTCbfp9Pp13a7/ZzP51/r9fqx1+t9rdfrh+l0+j2fzz9ns9nPfD7/ms/nP4fD4dtsNvtardbP4/H4Yz6ff0+n08/ZbPaz2Wx+1uv1w2Qy+ZpOp5+z2exns9n8rNfrh8lk8jWdTj9ns9nPZrP5Wa/XD5PJ5Gs6nX7OZrOfzWbzs16vHyaTydf/6fR7Pp9/zGazn/l8/jWfz38Oh8O32Wz2tVqtH4B/wAAAAAABAAAAAQAAAAEAAAAAAQAAAAEAAAAAAQAAAAEAAAAAAQAAAAEAAAAAAQAAAAEAAAAAAQAAAAEAAAAAAQAAAAEAAAAAAQAAAAEAAAAAAQAAAAEAAAAAAQAAAAEAAAAAAQAAAAEAAAAAAQAAAAEAAAAAAQAAAAEAAAAAAQAAAAEAAAAAAQAAAAEAAAAAAQAAAAEAAAAAAQAAAAEAAAAAAQAAAAEAAAAAAQAAAAEAAAAAAQAAAAEAAAAAAQAAAAEAAAAAAQAAAAEAAAAAAQAAAAEAAAAAAQAAAAEAAAAAAQAAAAEAAAAAAQAAAAEAAAAAAQAAAAEAAAAAAQAAAAEAAAAAAQAAAAEAAAAAAQAAAAEAAAAAAQAAAAEAAAAAAQAAAAEAAAAAAQAAAAEAAAAAAQAAAAEAAAAAAQAAAAEAAAAAAQAAAAEAAAAAAQAAwD8CDAAh9QZ882j32AAAAABJRU5ErkJggg==';
+            const ICON_BASE64 = 'iVBORw0KGgoAAAANSUhEUgAAAMAAAADACAYAAAEg+pWNAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAAyJpVFh0WE1MOmNvbS5hZG9iZS54bXAAAAAAADw/eHBhY2tldCBiZWdpbj0i77u/IiBpZD0iVzVNME1wQ2VoaUh6cmVTek5UY3prYzlkIj8+/Pvo88/gAAAJZSURBVHja7Nw9SstQGIBh8/tD0U1wFO7A3biZtXQPt7C2sLNxB07O4A4cFDqYQJtCUgT1POF7A4EkJ/zk5GFvR0dHR2fW6/V6fXl92Ww2X5fL5buPj4/vbrfb5+Fw+DydTp+m0+nz9XrtE4n7/f4z/X6/X6/X6/vj8fg1xvi62WxeZ7PZ12w2+57NZl+32+334XD4MpvNvnq93rd6vX6YTCbfp9Pp13a7/ZzP51/r9fqx1+t9rdfrh+l0+j2fzz9ns9nPfD7/ms/nP4fD4dtsNvtardbP4/H4Yz6ff0+n08/ZbPaz2Wx+1uv1w2Qy+ZpOp5+z2exns9n8rNfrh8lk8jWdTj9ns9nPZrP5Wa/XD5PJ5Gs6nX7OZrOfzWbzs16vHyaTydf/6fR7Pp9/zGazn/l8/jWfz38Oh8O32Wz2tVqtH4B/wAAAAAABAAAAAQAAAAEAAAAAAQAAAAEAAAAAAQAAAAEAAAAAAQAAAAEAAAAAAQAAAAEAAAAAAQAAAAEAAAAAAQAAAAEAAAAAAQAAAAEAAAAAAQAAAAEAAAAAAQAAAAEAAAAAAQAAAAEAAAAAAQAAAAEAAAAAAQAAAAEAAAAAAQAAAAEAAAAAAQAAAAEAAAAAAQAAAAEAAAAAAQAAAAEAAAAAAQAAAAEAAAAAAQAAAAEAAAAAAQAAAAEAAAAAAQAAAAEAAAAAAQAAAAEAAAAAAQAAAAEAAAAAAQAAAAEAAAAAAQAAAAEAAAAAAQAAAAEAAAAAAQAAAAEAAAAAAQAAAAEAAAAAAQAAAAEAAAAAAQAAAAEAAAAAAQAAAAEAAAAAAQAAAAEAAAAAAQAAAAEAAAAAAQAAwD8CDAAh9QZ882j32AAAAABJRU5ErkJggg==';
             const linkIcon = document.createElement('link'); linkIcon.rel = 'apple-touch-icon'; linkIcon.href = `data:image/png;base64,${ICON_BASE64}`; document.head.appendChild(linkIcon);
             const linkFav32 = document.createElement('link'); linkFav32.rel = 'icon'; linkFav32.type = 'image/png'; linkFav32.sizes = '32x32'; linkFav32.href = `data:image/png;base64,${ICON_BASE64}`; document.head.appendChild(linkFav32);
             if (!(/iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream)) {
@@ -63,6 +63,7 @@
         .nann-pill { border: 3px solid #000000; border-radius: 50px; padding: 4px 24px; display: inline-block; margin-bottom: 20px; background: transparent; }
         .nann-logo-text { font-family: 'Inter', sans-serif; font-weight: 900; font-size: 28px; color: #000000; letter-spacing: 1px; line-height: 1; }
         
+        /* Standard Gray Buttons */
         .menu-btn { 
             width: 90%; 
             padding: 6px 0; 
@@ -79,9 +80,50 @@
             flex-shrink: 0; 
         }
         .menu-btn:active { background-color: #e5e7eb; transform: scale(0.98); }
+
+        /* Manual Red Button Style (Fixes Missing Red) */
+        .btn-red {
+            margin-top: 15px; 
+            padding: 8px 24px; 
+            background-color: #dc2626; 
+            color: white; 
+            border-radius: 8px; 
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1); 
+            font-size: 14px; 
+            font-weight: bold;
+            border: none;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        .btn-red:hover { background-color: #b91c1c; }
+        
+        /* Manual Gray/Back Button Style */
+        .btn-back {
+            margin-top: 15px; 
+            padding: 8px 24px; 
+            background-color: #4b5563; 
+            color: white; 
+            border-radius: 8px; 
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1); 
+            font-size: 14px; 
+            font-weight: bold;
+            border: none;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        .btn-back:hover { background-color: #374151; }
+
+        /* Manual Battery Text Style (Fixes Black Text) */
+        .text-battery {
+            font-size: 10px;
+            color: #a1a1aa; /* Zinc-400 */
+            font-weight: bold;
+            letter-spacing: 0.05em;
+        }
+
         .theme-option { display: flex; align-items: center; width: 100%; padding: 8px; margin: 4px 0; border: 1px solid #eee; border-radius: 8px; cursor: pointer; flex-shrink: 0; }
         .theme-preview { width: 24px; height: 24px; border-radius: 50%; margin-right: 15px; border: 2px solid rgba(0,0,0,0.1); }
-        #file-input-html, #file-input-rom, #file-input-zip-web, #file-input-mgba-js, #file-input-mgba-wasm { display: none; } 
+        #file-input-html, #file-input-rom, #file-input-zip-web { display: none; } 
         
         .upload-label { 
             display: flex; align-items: center; justify-content: center; width: 100%; 
@@ -93,12 +135,6 @@
         .upload-label.folder-label { background-color: #16a34a; }
         .upload-label:hover { opacity: 0.9; }
         
-        .status-badge {
-            font-size: 10px; padding: 2px 6px; border-radius: 4px; margin-left: 8px;
-        }
-        .status-missing { background: #fee2e2; color: #991b1b; border: 1px solid #fca5a5; }
-        .status-ready { background: #dcfce7; color: #166534; border: 1px solid #86efac; }
-
         .nann-brand { font-family: 'Inter', sans-serif; font-style: italic; font-weight: 900; color: rgba(0,0,0,0.6); font-size: 28px; letter-spacing: 1px; margin-top: 20px; margin-bottom: 10px; text-shadow: 1px 1px 0px rgba(255, 255, 255, 0.2), -1px -1px 0px rgba(0, 0, 0, 0.2); }
         .controls-area { width: 100%; flex-grow: 1; position: relative; transform: translate3d(0,0,0); }
         .speaker-grille { position: absolute; bottom: 40px; right: 25px; display: flex; gap: 8px; transform: rotate(-25deg); z-index: 10; }
@@ -150,7 +186,7 @@
     <div id="console-wrapper">
         <div class="gbc-body" id="gbc-body">
             <div class="gbc-screen-lens">
-                <div class="lens-branding"><div class="power-led" id="power-led"></div><div class="text-xs text-zinc-400 font-bold tracking-wider">BATTERY</div></div>
+                <div class="lens-branding"><div class="power-led" id="power-led"></div><div class="text-battery">BATTERY</div></div>
                 <div class="lcd-screen" id="lcd-screen">
                     <div id="loading-overlay" class="text-white text-center absolute flex flex-col items-center justify-center" style="z-index: 30;">
                         <svg class="animate-spin h-6 w-6 text-white mb-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
@@ -167,7 +203,7 @@
                         <div class="menu-btn" id="btn-menu-load-game">LOAD GAME</div>
                         <div class="menu-btn" id="btn-menu-controls">CONTROLS</div>
                         <div class="menu-btn" id="btn-menu-style">CHANGE STYLE</div>
-                        <button id="btn-close-main-menu" class="mt-3 px-6 py-2 bg-red-600 text-white rounded-lg shadow-lg hover:bg-red-700 transition text-sm font-bold">Cancel</button>
+                        <button id="btn-close-main-menu" class="btn-red">Cancel</button>
                     </div>
 
                     <div id="load-game-menu" class="menu-ui">
@@ -175,14 +211,14 @@
                         <div class="menu-btn" id="btn-load-rom-action">ROM FILE</div>
                         <div class="menu-btn" id="btn-load-html-file">HTML FILE</div>
                         <div class="menu-btn" id="btn-load-zip-web">WEB ZIP</div>
-                        <button id="btn-back-load-menu" class="mt-3 px-6 py-2 bg-gray-600 text-white rounded-lg shadow-lg hover:bg-gray-700 transition text-sm font-bold">Back</button>
+                        <button id="btn-back-load-menu" class="btn-back">Back</button>
                     </div>
                     
                     <input type="file" id="file-input-rom" accept=".gb,.gbc,.gba,.zip" style="display:none">
                     <input type="file" id="file-input-html" accept=".html,text/html" style="display:none">
                     <input type="file" id="file-input-zip-web" accept=".zip" style="display:none">
                     
-                    <div id="start-menu" class="menu-ui"><h2 class="text-lg font-bold mb-3 text-gray-800 tracking-wider">PAUSE</h2><div class="text-xs text-center text-gray-500 mb-2">Use in-game saves.</div><button id="btn-close-start-menu" class="mt-3 px-6 py-2 bg-red-600 text-white rounded-lg shadow-lg hover:bg-red-700 transition text-sm font-bold">Resume</button></div>
+                    <div id="start-menu" class="menu-ui"><h2 class="text-lg font-bold mb-3 text-gray-800 tracking-wider">PAUSE</h2><div class="text-xs text-center text-gray-500 mb-2">Use in-game saves.</div><button id="btn-close-start-menu" class="btn-red">Resume</button></div>
                     <div id="styles-menu" class="menu-ui"><h2 class="text-xl font-bold mb-4 text-gray-800">STYLES</h2><div class="w-full max-h-[140px] overflow-y-auto px-4">
                         <div class="theme-option" data-theme="nannboy"><div class="theme-preview" style="background: linear-gradient(145deg, #f3f4f6, #9ca3af); position: relative;"><div style="position: absolute; width: 8px; height: 8px; background: #800000; border-radius: 50%; bottom: 2px; right: 2px;"></div></div><span class="font-bold text-gray-700">Nann Boy</span></div>
                         <div class="theme-option" data-theme="red"><div class="theme-preview" style="background: linear-gradient(145deg, #E83942, #b91c1c);"></div><span class="font-bold text-gray-700">Original Red</span></div>
@@ -193,9 +229,9 @@
                         <div class="theme-option" data-theme="orange"><div class="theme-preview" style="background: linear-gradient(145deg, #f97316, #c2410c);"></div><span class="font-bold text-gray-700">June Orange</span></div>
                         <div class="theme-option" data-theme="white"><div class="theme-preview" style="background: linear-gradient(145deg, #f3f4f6, #9ca3af);"></div><span class="font-bold text-gray-700">Polar White</span></div>
                         <div class="theme-option" data-theme="black"><div class="theme-preview" style="background: linear-gradient(145deg, #27272a, #000000);"></div><span class="font-bold text-gray-700">Midnight Black</span></div>
-                    </div><button id="btn-back-styles" class="mt-4 px-6 py-2 bg-gray-600 text-white rounded-lg shadow-lg hover:bg-gray-700 transition">Back</button></div>
-                    <div id="key-binding-menu" class="menu-ui"><h2 class="text-xl font-bold mb-4 text-gray-800">Controls</h2><div id="bindings-list" class="max-h-40 overflow-y-auto w-full flex flex-col items-center"></div><button id="btn-close-key-map" class="mt-4 px-6 py-2 bg-red-600 text-white rounded-lg shadow-lg hover:bg-red-700 transition">Close</button></div>
-                    <div id="key-selection-modal" class="menu-ui" style="display: none; z-index: 300;"><h2 class="text-xl font-bold mb-4 text-gray-800">Map <span id="binding-label-display" class="text-red-600"></span></h2><div id="virtual-keypad" class="grid grid-cols-5 gap-2 p-2 max-w-sm overflow-y-auto" style="max-height: 70%;"></div><button id="btn-cancel-key-select" class="mt-4 px-6 py-2 bg-gray-600 text-white rounded-lg shadow-lg hover:bg-red-700 transition">Cancel</button></div>
+                    </div><button id="btn-back-styles" class="btn-back">Back</button></div>
+                    <div id="key-binding-menu" class="menu-ui"><h2 class="text-xl font-bold mb-4 text-gray-800">Controls</h2><div id="bindings-list" class="max-h-40 overflow-y-auto w-full flex flex-col items-center"></div><button id="btn-close-key-map" class="btn-red">Close</button></div>
+                    <div id="key-selection-modal" class="menu-ui" style="display: none; z-index: 300;"><h2 class="text-xl font-bold mb-4 text-gray-800">Map <span id="binding-label-display" class="text-red-600"></span></h2><div id="virtual-keypad" class="grid grid-cols-5 gap-2 p-2 max-w-sm overflow-y-auto" style="max-height: 70%;"></div><button id="btn-cancel-key-select" class="btn-red">Cancel</button></div>
                     
                     <div id="toast-notification">GAME SAVED</div>
                 </div>
@@ -265,8 +301,6 @@
         function playHapticSound() {
             if (!audioCtx) return;
             const t = audioCtx.currentTime;
-            
-            // "Click"
             const osc = audioCtx.createOscillator();
             const gain = audioCtx.createGain();
             osc.connect(gain);
@@ -279,7 +313,6 @@
             osc.start(t);
             osc.stop(t + 0.03);
 
-            // "Thock"
             const osc2 = audioCtx.createOscillator();
             const gain2 = audioCtx.createGain();
             osc2.connect(gain2);
@@ -371,8 +404,6 @@
             }
 
             // 2. ROM MODE (mGBA)
-            // mGBA typically listens to document/window key events
-            // We simulate a native KeyboardEvent
             if (gameMode === 'rom') {
                  const event = new KeyboardEvent(eventType, {
                     key: mapping.key,
@@ -443,7 +474,7 @@
         
 
         function setupMenuSounds() {
-            const clickables = document.querySelectorAll('.menu-btn, .upload-label, button');
+            const clickables = document.querySelectorAll('.menu-btn, .btn-red, .btn-back, .upload-label, button');
             clickables.forEach(btn => {
                 btn.addEventListener('click', () => { initAudio(); playHapticSound(); });
             });
@@ -556,9 +587,8 @@
             }
         }
 
-        // --- WEB ZIP / HTML HANDLERS (Unchanged logic, just keeping them working) ---
+        // --- WEB ZIP / HTML HANDLERS ---
         function handleWebZipUpload(event) {
-            // ... (Same logic as before, consolidated for brevity) ...
             const file = event.target.files[0]; if (!file) return;
             const loadingOverlay = document.getElementById('loading-overlay');
             if(loadingOverlay) { loadingOverlay.style.display = 'flex'; loadingOverlay.innerHTML = `<span id="loading-text">Unzipping Game...</span>`; }

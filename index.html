@@ -31,7 +31,16 @@
         .lcd-screen { background-color: var(--screen-color); width: 320px; height: 240px; box-shadow: inset 3px 3px 10px rgba(0,0,0,0.8); overflow: hidden; display: flex; align-items: center; justify-content: center; position: relative; transform: translate3d(0,0,0); backface-visibility: hidden; contain: paint; }
         .lcd-screen::before { content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: repeating-linear-gradient(to bottom, rgba(0,0,0,0.05) 0px, rgba(0,0,0,0.05) 1px, transparent 1px, transparent 2px), repeating-linear-gradient(to right, rgba(0,0,0,0.02) 0px, rgba(0,0,0,0.02) 1px, transparent 1px, transparent 2px); pointer-events: none; z-index: 200; }
         
-        iframe, canvas#canvas { width: 100%; height: 100%; border: none; background-color: #000; display: none; image-rendering: pixelated; }
+        iframe { width: 100%; height: 100%; border: none; background-color: #000; display: none; }
+        
+        /* STATIC CANVAS FIX FOR SAFARI */
+        canvas#canvas {
+            display: none; /* Hidden by default */
+            width: 100%;
+            height: 100%;
+            image-rendering: pixelated;
+            /* Remove 'desynchronized' which breaks iOS */
+        }
         
         .menu-ui { 
             position: absolute; top: 0; left: 0; width: 100%; height: 100%; 
@@ -180,8 +189,11 @@
             <div class="gbc-screen-lens">
                 <div class="lens-branding"><div class="power-led" id="power-led"></div><div class="text-battery">BATTERY</div></div>
                 <div class="lcd-screen" id="lcd-screen">
+                    
+                    <!-- Static Canvas for Safari Compatibility -->
+                    <canvas id="canvas" width="240" height="160"></canvas>
+
                     <!-- CUSTOM BOOT ANIMATION OVERLAY -->
-                    <!-- This covers the screen while mGBA boots up. Background matches --screen-color. -->
                     <div id="loading-overlay" class="absolute inset-0 flex flex-col items-center justify-center z-50" style="background-color: var(--screen-color); display: none;">
                         <div class="boot-logo">NANN BOY</div>
                         <div class="mt-4">
@@ -196,8 +208,6 @@
                     
                     <!-- Added credentialless to help with some COEP cases -->
                     <iframe id="game-iframe" credentialless src="about:blank" allow="autoplay; fullscreen; gamepad; accelerometer; gyroscope; clipboard-write" sandbox="allow-forms allow-pointer-lock allow-popups allow-same-origin allow-scripts" referrerpolicy="no-referrer"></iframe>
-                    
-                    <!-- ID 'canvas' is created dynamically now -->
                     
                     <div id="main-menu" class="menu-ui">
                         <h2 class="text-lg font-bold mb-3 text-gray-800 tracking-wider">MENU</h2>
@@ -252,7 +262,6 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
 
-        // DEBUG SYSTEM
         function debugLog(msg, type='info') {
             console.log(`[Emulator] ${msg}`);
         }
@@ -288,7 +297,7 @@
 
         let audioCtx = null;
         function initAudio() {
-            // OPTIMIZATION: Use 'playback' latencyHint to prevent stuttering on mobile
+            // Use 'playback' latency for mobile smooth audio
             if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)({ latencyHint: 'playback' });
             if (audioCtx.state === 'suspended') audioCtx.resume();
         }
@@ -490,9 +499,13 @@
                 window.Module.pauseGame();
             }
             
-            // Hide canvas, don't remove
+            // Hide canvas visually, don't remove it from DOM
             const canvas = document.getElementById('canvas');
-            if (canvas) canvas.style.display = 'none';
+            if (canvas) {
+                const ctx = canvas.getContext('2d');
+                ctx.clearRect(0,0, canvas.width, canvas.height); // Clear last frame
+                canvas.style.display = 'none';
+            }
             
             document.getElementById('power-led').classList.remove('on');
             gameMode = null;
@@ -585,28 +598,24 @@
                 }
             }
 
-            // Create Canvas only if it doesn't exist
+            // USE STATIC CANVAS
             let canvas = document.getElementById('canvas');
             if (!canvas) {
-                canvas = document.createElement('canvas');
-                canvas.id = 'canvas';
-                canvas.width = 240;
-                canvas.height = 160;
-                canvas.style.display = 'block'; 
-                const lcdScreen = document.getElementById('lcd-screen');
-                const mainMenu = document.getElementById('main-menu'); 
-                lcdScreen.insertBefore(canvas, mainMenu);
-            } else {
-                canvas.style.display = 'block';
+                console.error("Canvas element missing!");
+                return;
             }
+            canvas.style.display = 'block';
             
-            const ctx = canvas.getContext('2d', { alpha: false, desynchronized: true });
+            // Standard Context (Optimized for compatibility)
+            // REMOVED: desynchronized: true (Fixes black screen on iOS)
+            const ctx = canvas.getContext('2d', { alpha: false });
 
             document.getElementById('start-screen').style.display = 'none';
             document.getElementById('game-iframe').style.display = 'none';
 
             const config = {
                 canvas: canvas,
+                // Frameskip 1 is vital for mobile smoothness
                 arguments: ['--frameskip', '1'],
                 locateFile: function(path, prefix) {
                     if (path.endsWith('.wasm')) {
@@ -651,6 +660,7 @@
                          } catch(e) { }
                      }
                      
+                     // Force 16ms loop (60fps target) to avoid stutter
                      if (Module.setMainLoopTiming) {
                          Module.setMainLoopTiming(1, 16);
                      }
@@ -675,6 +685,9 @@
         }
 
         function handleRomUpload(event) {
+            // Force Audio Resume on User Interaction (Safari Requirement)
+            initAudio(); 
+            
             const file = event.target.files[0]; 
             if (!file) return;
             

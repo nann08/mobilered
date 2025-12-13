@@ -19,7 +19,7 @@
     
     <style>
         *, *::before, *::after { box-sizing: border-box; -webkit-tap-highlight-color: transparent; -webkit-touch-callout: none; user-select: none; }
-        :root { --screen-color: #000000; /* Default to black to avoid white flash */ --screen-shadow: #0f380f; --safe-top: env(safe-area-inset-top, 20px); --safe-bottom: env(safe-area-inset-bottom, 20px); --console-main: #E83942; --console-dark: #b91c1c; --bg-color: #7f1d1d; --btn-color: #1c1c1c; --dpad-color: #1c1c1c; --text-battery: #a1a1aa; }
+        :root { --screen-color: #000000; --screen-shadow: #0f380f; --safe-top: env(safe-area-inset-top, 20px); --safe-bottom: env(safe-area-inset-bottom, 20px); --console-main: #E83942; --console-dark: #b91c1c; --bg-color: #7f1d1d; --btn-color: #1c1c1c; --dpad-color: #1c1c1c; --text-battery: #a1a1aa; }
         html, body { width: 100%; height: 100%; margin: 0; padding: 0; overscroll-behavior: none; position: fixed; overflow: hidden; background-color: var(--bg-color); transition: background-color 0.3s ease; font-family: 'Inter', sans-serif; display: flex; align-items: flex-start; justify-content: center; }
         #console-wrapper { transform-origin: top center; will-change: transform; display: flex; justify-content: center; transform: translate3d(0,0,0); }
         .gbc-body { --console-width: 440px; background: linear-gradient(145deg, var(--console-main) 0%, var(--console-dark) 100%); width: var(--console-width); border-radius: 20px 20px 60px 20px; box-shadow: 0 20px 40px rgba(0,0,0,0.5), inset 2px 2px 5px rgba(255,255,255,0.3); position: relative; display: flex; flex-direction: column; align-items: center; padding-top: calc(30px + var(--safe-top)); padding-bottom: var(--safe-bottom); contain: content; transition: background 0.3s ease; }
@@ -29,9 +29,8 @@
         .power-led.on { background-color: #ff0000; box-shadow: 0 0 8px #ff3333, inset 0 0 5px rgba(255, 255, 255, 0.7); animation: led-glow 1.5s infinite alternate ease-in-out; }
         @keyframes led-glow { 0% { box-shadow: 0 0 5px #990000; opacity: 0.8; } 50% { box-shadow: 0 0 10px #ff0000; opacity: 1; } 100% { box-shadow: 0 0 5px #990000; opacity: 0.8; } }
         
-        /* SCREEN CONTAINER */
         .lcd-screen { 
-            background-color: #000; /* Force black background */
+            background-color: #000; 
             width: 320px; height: 240px; 
             box-shadow: inset 3px 3px 10px rgba(0,0,0,0.8); 
             overflow: hidden; 
@@ -42,20 +41,20 @@
             contain: paint; 
         }
         
-        /* GPU ACCELERATED IFRAME */
         iframe { 
             width: 100%; 
             height: 100%; 
             border: none; 
             background-color: #000; 
             display: none;
-            /* iOS Performance Tweaks */
             will-change: transform;
             transform: translateZ(0);
-            -webkit-overflow-scrolling: touch;
         }
         
-        /* STATIC CANVAS */
+        /* CANVAS OPTIMIZATION 
+           image-rendering: pixelated ensures crisp scaling without blurring
+           width/height 100% allows CSS scaling while internal resolution remains 240x160
+        */
         canvas#canvas {
             display: none; 
             width: 100%; height: 100%;
@@ -240,51 +239,62 @@
         let isAuthReady = false;
 
         let audioCtx = null;
+        let mainGainNode = null; // Master volume control
+
         function initAudio() {
-            // Use 'playback' latency for mobile smooth audio
             if (!audioCtx) {
                 const AudioContext = window.AudioContext || window.webkitAudioContext;
-                if(AudioContext) audioCtx = new AudioContext({ latencyHint: 'playback' });
+                if(AudioContext) {
+                    audioCtx = new AudioContext({ latencyHint: 'playback' });
+                    // Create Master Gain for muting/fading
+                    mainGainNode = audioCtx.createGain();
+                    mainGainNode.gain.value = 0; // START MUTED
+                    mainGainNode.connect(audioCtx.destination);
+                }
             }
             if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
         }
+
         function playHapticSound() {
-            if (!audioCtx) return;
+            if (!audioCtx || !mainGainNode) return;
+            // Only play haptics if we are not totally muted, or route haptics separately
+            // For now, we only play haptics to destination if volume is up, OR we create separate path
+            // Let's create a separate path for haptics so they work even if game is muted on load
             const t = audioCtx.currentTime;
+            
+            const hapticGain = audioCtx.createGain();
+            hapticGain.connect(audioCtx.destination); // Bypass mainGainNode for UI sounds
             
             const filter = audioCtx.createBiquadFilter();
             filter.type = "lowpass";
             filter.frequency.value = 3500;
-            filter.connect(audioCtx.destination);
+            filter.connect(hapticGain);
 
             const clickOsc = audioCtx.createOscillator();
-            const clickGain = audioCtx.createGain();
-            clickOsc.connect(clickGain);
-            clickGain.connect(filter);
+            clickOsc.connect(filter);
             clickOsc.type = 'square';
             clickOsc.frequency.setValueAtTime(1500, t);
             clickOsc.frequency.exponentialRampToValueAtTime(1000, t + 0.01);
-            clickGain.gain.setValueAtTime(0.08, t);
-            clickGain.gain.exponentialRampToValueAtTime(0.001, t + 0.02);
+            
+            hapticGain.gain.setValueAtTime(0.08, t);
+            hapticGain.gain.exponentialRampToValueAtTime(0.001, t + 0.02);
+            
             clickOsc.start(t);
             clickOsc.stop(t + 0.02);
+        }
 
-            const thudOsc = audioCtx.createOscillator();
-            const thudGain = audioCtx.createGain();
-            thudOsc.connect(thudGain);
-            thudGain.connect(filter);
-            thudOsc.type = 'triangle';
-            thudOsc.frequency.setValueAtTime(200, t);
-            thudOsc.frequency.exponentialRampToValueAtTime(50, t + 0.05);
-            thudGain.gain.setValueAtTime(0.1, t);
-            thudGain.gain.exponentialRampToValueAtTime(0.001, t + 0.05);
-            thudOsc.start(t);
-            thudOsc.stop(t + 0.06);
+        // --- SAFE AUDIO FADE IN ---
+        function fadeInGameAudio() {
+            if(audioCtx && mainGainNode) {
+                const t = audioCtx.currentTime;
+                // Ramp up from 0 to 1 over 1.5 seconds
+                mainGainNode.gain.setTargetAtTime(1.0, t, 0.5);
+            }
         }
 
         function applyTheme(themeName) {
             const root = document.documentElement;
-            let mainColor = '#E83942'; let darkColor = '#b91c1c'; let bgColor = '#7f1d1d'; let btnColor = '#1c1c1c'; let dpadColor = '#1c1c1c';
+            let mainColor = '#E83942'; let darkColor = '#b91c1c'; let btnColor = '#1c1c1c'; let dpadColor = '#1c1c1c'; let bgColor = '#7f1d1d';
             if (themeName === 'purple') { mainColor = '#7c3aed'; darkColor = '#4c1d95'; bgColor = '#4c1d95'; }
             else if (themeName === 'glacier') { mainColor = '#a5f3fc'; darkColor = '#0891b2'; bgColor = '#164e63'; }
             else if (themeName === 'pink') { mainColor = '#f472b6'; darkColor = '#db2777'; bgColor = '#831843'; }
@@ -441,16 +451,14 @@
             iframe.src = 'about:blank';
             iframe.style.display = 'none';
 
-            // Pausing mGBA instead of destroying (FIX for crash)
             if (window.Module && window.Module.pauseGame) {
                 window.Module.pauseGame();
             }
             
-            // Hide canvas visually, don't remove it from DOM
             const canvas = document.getElementById('canvas');
             if (canvas) {
                 const ctx = canvas.getContext('2d');
-                ctx.clearRect(0,0, canvas.width, canvas.height); // Clear last frame
+                ctx.clearRect(0,0, canvas.width, canvas.height); 
                 canvas.style.display = 'none';
             }
             
@@ -485,7 +493,7 @@
         async function launchMgba(romBuffer, romName) {
             closeAllMenus();
             
-            // NEW LOGIC: Reuse existing instance if available to avoid crash
+            // REUSE LOGIC
             if (window.Module && window.Module.loadGame) {
                 const loadingOverlay = document.getElementById('loading-overlay');
                 if(loadingOverlay) {
@@ -498,12 +506,10 @@
                     }
                 }
 
-                // CRITICAL FIX: Ensure previous HTML/Game content is truly dead
                 const iframe = document.getElementById('game-iframe');
                 iframe.src = 'about:blank';
                 iframe.style.display = 'none';
 
-                // Write ROM
                 const ext = romName.split('.').pop();
                 const safeName = 'game.' + ext; 
                 debugLog("Overwriting ROM: " + safeName);
@@ -511,17 +517,11 @@
                     window.Module.FS.writeFile(safeName, new Uint8Array(romBuffer));
                 }
                 
-                // Load
                 debugLog("Swapping Cartridge...");
                 window.Module.loadGame(safeName);
                 gameMode = 'rom';
                 
-                // Re-apply settings
                 if (window.Module.toggleRewind) window.Module.toggleRewind(false);
-                
-                // --- SAFARI WHITE SCREEN FIX ---
-                // Do NOT force setMainLoopTiming here if it causes freeze.
-                // Trust mGBA's default internal loop for stability on re-load.
                 
                 const canvas = document.getElementById('canvas');
                 if(canvas) canvas.style.display = 'block';
@@ -531,9 +531,12 @@
                 document.getElementById('start-screen').style.display = 'none';
                 document.getElementById('btn-menu-exit-game').style.display = 'block';
                 
-                setTimeout(() => { if(loadingOverlay) loadingOverlay.style.display = 'none'; }, 2000);
+                // HIDE OVERLAY & FADE IN AUDIO
+                setTimeout(() => { 
+                    if(loadingOverlay) loadingOverlay.style.display = 'none'; 
+                    fadeInGameAudio(); // Only unmute when game is visible
+                }, 2000);
                 
-                // Ensure audio is running
                 if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
                 if (window.Module.SDL2?.audioContext?.state === 'suspended') window.Module.SDL2.audioContext.resume();
                 
@@ -553,7 +556,6 @@
                 }
             }
 
-            // USE STATIC CANVAS
             let canvas = document.getElementById('canvas');
             if (!canvas) {
                 console.error("Canvas element missing!");
@@ -561,16 +563,15 @@
             }
             canvas.style.display = 'block';
             
-            // Standard Context (Optimized for compatibility)
-            // REMOVED: desynchronized: true (Fixes black screen on iOS)
-            const ctx = canvas.getContext('2d', { alpha: false });
+            // REMOVE Manual getContext() here to fix black screen.
+            // Let the Emulator Module acquire the context.
 
             document.getElementById('start-screen').style.display = 'none';
             document.getElementById('game-iframe').style.display = 'none';
 
             const config = {
                 canvas: canvas,
-                // Frameskip 1 is vital for mobile smoothness
+                // Force Frameskip 1 for performance on mobile
                 arguments: ['--frameskip', '1'],
                 locateFile: function(path, prefix) {
                     if (path.endsWith('.wasm')) {
@@ -614,19 +615,16 @@
                             Module.toggleRewind(false);
                          } catch(e) { }
                      }
-                     
-                     // --- SAFARI WHITE SCREEN FIX ---
-                     // REMOVED setMainLoopTiming override. 
-                     // It conflicts with WASM's loop on Safari causing the white freeze.
 
                      document.getElementById('power-led').classList.add('on');
                      document.getElementById('btn-menu-exit-game').style.display = 'block'; 
                      
+                     // HIDE OVERLAY & FADE IN AUDIO
                      setTimeout(() => {
                         if(loadingOverlay) loadingOverlay.style.display = 'none';
+                        fadeInGameAudio(); // Safe un-mute
                      }, 2000);
                      
-                     // Ensure audio is running
                      if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
                      const audioContext = Module.SDL2?.audioContext || Module.audioContext;
                      if (audioContext && audioContext.state === 'suspended') {
@@ -641,7 +639,6 @@
         }
 
         function handleRomUpload(event) {
-            // Force Audio Resume on User Interaction (Safari Requirement)
             initAudio(); 
             
             const file = event.target.files[0]; 

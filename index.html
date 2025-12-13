@@ -564,46 +564,11 @@
 
             // Reuse Module if already loaded (Smooth Switching)
             if (window.Module && window.Module.loadGame) {
-                 // 1. Invisible Screen Fix: Use the standard ID 'canvas'
-                const canvas = document.getElementById('canvas');
-                canvas.style.display = 'block';
-                document.getElementById('start-screen').style.display = 'none';
-                gameMode = 'rom'; // Update global mode
-                
-                // Write File
-                const ext = romName.split('.').pop();
-                const safeName = 'game.' + ext;
-                
-                if (window.Module.FS) {
-                    window.Module.FS.writeFile(safeName, new Uint8Array(romBuffer));
-                } else if (typeof FS !== 'undefined') {
-                    FS.writeFile(safeName, new Uint8Array(romBuffer));
-                }
-                
-                // Resume game if it was paused
+                // FORCE RELOAD FOR ROM SWITCHING TO PREVENT MEMORY CRASH
                 try {
-                    // DISABLE REWIND to prevent memory crashes
-                    if (window.Module.toggleRewind) {
-                        window.Module.toggleRewind(false);
-                    }
-
-                    window.Module.loadGame(safeName);
-                    // Resume audio context if needed
-                    const audioContext = window.Module.SDL2?.audioContext || window.Module.audioContext;
-                    if (audioContext && audioContext.state === 'suspended') {
-                         audioContext.resume();
-                    }
-                } catch (e) {
-                    console.error("Error reusing module:", e);
-                    // Fallback to reload if reuse fails
-                    if(!confirm("Error switching games. Reload?")) return;
-                    location.reload();
-                    return;
-                }
-
-                document.getElementById('power-led').classList.add('on');
-                document.getElementById('btn-menu-exit-game').style.display = 'block'; // SHOW EXIT BUTTON
-                if(loadingOverlay) loadingOverlay.style.display = 'none';
+                    window.Module.quitGame();
+                } catch(e) {}
+                location.reload(); 
                 return;
             }
 
@@ -665,10 +630,14 @@
                 if (Module.loadGame) {
                      debugLog("Calling loadGame()...");
 
-                     // DISABLE REWIND to prevent memory crashes
+                     // DISABLE REWIND IMMEDIATELY to prevent memory crashes
                      if (Module.toggleRewind) {
-                         debugLog("Disabling Rewind to save memory...");
-                         Module.toggleRewind(false);
+                         debugLog("Disabling Rewind...");
+                         try {
+                            Module.toggleRewind(false);
+                         } catch(e) {
+                             console.warn("Could not disable rewind:", e);
+                         }
                      }
 
                      Module.loadGame(safeName);

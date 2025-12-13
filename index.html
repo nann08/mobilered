@@ -194,13 +194,15 @@
                     <!-- CUSTOM BOOT ANIMATION OVERLAY -->
                     <!-- This covers the screen while mGBA boots up. Background matches --screen-color. -->
                     <div id="loading-overlay" class="absolute inset-0 flex flex-col items-center justify-center z-50" style="background-color: var(--screen-color); display: none;">
-                        <div class="boot-logo">NANN BOY</div>
-                        <div class="mt-4">
+                        <div class="boot-logo mb-6">NANN BOY</div>
+                        
+                        <!-- Initial Progress Bar -->
+                        <div id="boot-progress-container" class="mt-4">
                             <div class="w-16 h-1 bg-gray-300 rounded overflow-hidden">
                                 <div class="h-full bg-blue-600 animate-progress"></div>
                             </div>
+                            <div id="loading-text" class="mt-2 text-xs text-gray-400 font-bold tracking-wide text-center">INITIALIZING</div>
                         </div>
-                        <div id="loading-text" class="mt-2 text-xs text-gray-400 font-bold tracking-wide">INITIALIZING</div>
                     </div>
                     
                     <div id="start-screen"><div class="nann-pill"><div class="nann-logo-text">NANN BOY</div></div></div>
@@ -582,6 +584,9 @@
 
             // Custom Loading Overlay with Boot Animation
             const loadingOverlay = document.getElementById('loading-overlay');
+            const startBtn = document.getElementById('btn-start-game');
+            const loadText = document.getElementById('loading-text');
+            
             if(loadingOverlay) {
                 loadingOverlay.style.display = 'flex';
                 // Reset animation
@@ -625,8 +630,8 @@
 
             // Load JS as a Module
             try {
-                // Dynamic Import
-                const mGBA = await import('./mgba.js');
+                // Dynamic Import with timestamp to FORCE REFRESH module (Fixes stuck memory on 2nd load)
+                const mGBA = await import('./mgba.js?t=' + Date.now());
                 const moduleFactory = mGBA.default; 
 
                 // 1. Initialize the Module with our config
@@ -658,53 +663,65 @@
                     FS.writeFile(safeName, new Uint8Array(romBuffer));
                 }
                 debugLog("ROM Written.");
-
-                // 4. Start Game using Official API
-                if (Module.loadGame) {
-                     debugLog("Calling loadGame()...");
-
-                     Module.loadGame(safeName);
-                     gameMode = 'rom'; // Update global mode
-
-                     // CRITICAL FIX 1: DISABLE REWIND IMMEDIATELY to prevent memory crashes
-                     if (Module.toggleRewind) {
-                         debugLog("Disabling Rewind...");
-                         try {
-                            Module.toggleRewind(false);
-                         } catch(e) {
-                             console.warn("Could not disable rewind:", e);
-                         }
-                     }
-                     
-                     // CRITICAL FIX 2: FORCE AUDIO SYNC (SetTimeout Mode 1, 16ms)
-                     // This disconnects the game loop from the screen refresh rate, preventing stutter/slow motion.
-                     if (Module.setMainLoopTiming) {
-                         debugLog("Forcing Audio Sync Mode...");
-                         Module.setMainLoopTiming(1, 16);
-                     }
-
-                     // Turn on LED
-                     document.getElementById('power-led').classList.add('on');
-                     document.getElementById('btn-menu-exit-game').style.display = 'block'; // SHOW EXIT BUTTON
-                     
-                     // Hide loading overlay after a short delay to let boot animation finish/game start
-                     setTimeout(() => {
-                        if(loadingOverlay) loadingOverlay.style.display = 'none';
-                     }, 2000);
-                     
-                     // Resume Audio
-                     const audioContext = Module.SDL2?.audioContext || Module.audioContext;
-                     if (audioContext && audioContext.state === 'suspended') {
-                         audioContext.resume();
-                     }
-                } else {
-                     debugLog("CRITICAL: Module.loadGame not found!", "error");
-                }
+                
+                // Start Game immediately
+                startGameLogic(Module, safeName, loadingOverlay);
 
             } catch (e) {
                 if(loadingOverlay) loadingOverlay.innerHTML = `Error: ${e.message}`;
                 debugLog("Failed to init: " + e, "error");
                 console.error(e);
+            }
+        }
+        
+        function startGameLogic(Module, safeName, loadingOverlay) {
+             // 4. Start Game using Official API
+            if (Module.loadGame) {
+                 debugLog("Calling loadGame()...");
+
+                 Module.loadGame(safeName);
+                 gameMode = 'rom'; // Update global mode
+
+                 // CRITICAL FIX 1: DISABLE REWIND IMMEDIATELY to prevent memory crashes
+                 if (Module.toggleRewind) {
+                     debugLog("Disabling Rewind...");
+                     try {
+                        Module.toggleRewind(false);
+                     } catch(e) {
+                         console.warn("Could not disable rewind:", e);
+                     }
+                 }
+                 
+                 // CRITICAL FIX 2: FORCE AUDIO SYNC (SetTimeout Mode 1, 16ms)
+                 if (Module.setMainLoopTiming) {
+                     debugLog("Forcing Audio Sync Mode...");
+                     Module.setMainLoopTiming(1, 16);
+                 }
+
+                 // Turn on LED
+                 document.getElementById('power-led').classList.add('on');
+                 document.getElementById('btn-menu-exit-game').style.display = 'block'; // SHOW EXIT BUTTON
+                 
+                 // Hide overlay
+                 if(loadingOverlay) loadingOverlay.style.display = 'none';
+                 
+                 // CRITICAL FIX 3: Audio Unlocker (Invisible)
+                 // Wait for ANY user interaction to unlock the audio context
+                 const resumeAudio = () => {
+                     const audio = Module.SDL2?.audioContext || Module.audioContext;
+                     if (audio && audio.state !== 'running') {
+                         audio.resume().then(() => debugLog("Audio unlocked!"));
+                     }
+                 };
+                 // Try immediately
+                 resumeAudio();
+                 // Attach to global events for invisible unlock
+                 ['touchstart', 'mousedown', 'keydown'].forEach(evt => 
+                    window.addEventListener(evt, resumeAudio, { once: true, capture: true })
+                 );
+                 
+            } else {
+                 debugLog("CRITICAL: Module.loadGame not found!", "error");
             }
         }
 

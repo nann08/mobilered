@@ -55,56 +55,12 @@
         .nann-pill { border: 3px solid #000000; border-radius: 50px; padding: 4px 24px; display: inline-block; margin-bottom: 20px; background: transparent; }
         .nann-logo-text { font-family: 'Inter', sans-serif; font-weight: 900; font-size: 28px; color: #000000; letter-spacing: 1px; line-height: 1; }
         
-        /* Compact Menu Buttons */
-        .menu-btn { 
-            width: 90%; 
-            padding: 5px 0;
-            margin: 2px 0;
-            background-color: #f3f4f6; 
-            border: 2px solid #d1d5db; 
-            border-radius: 6px;
-            font-weight: bold; 
-            font-size: 12px;
-            color: #374151; 
-            text-align: center; 
-            cursor: pointer; 
-            transition: all 0.2s; 
-            flex-shrink: 0; 
-        }
+        .menu-btn { width: 90%; padding: 5px 0; margin: 2px 0; background-color: #f3f4f6; border: 2px solid #d1d5db; border-radius: 6px; font-weight: bold; font-size: 12px; color: #374151; text-align: center; cursor: pointer; transition: all 0.2s; flex-shrink: 0; }
         .menu-btn:active { background-color: #e5e7eb; transform: scale(0.98); }
-
-        /* Compact Red Button */
-        .btn-red { 
-            margin-top: 8px;
-            padding: 6px 20px; 
-            background-color: #dc2626; 
-            color: white; 
-            border-radius: 6px; 
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1); 
-            font-size: 12px; 
-            font-weight: bold; 
-            border: none; 
-            cursor: pointer; 
-            transition: background-color 0.2s; 
-        }
+        .btn-red { margin-top: 8px; padding: 6px 20px; background-color: #dc2626; color: white; border-radius: 6px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); font-size: 12px; font-weight: bold; border: none; cursor: pointer; transition: background-color 0.2s; }
         .btn-red:hover { background-color: #b91c1c; }
-        
-        /* Compact Back Button */
-        .btn-back { 
-            margin-top: 8px; 
-            padding: 6px 20px; 
-            background-color: #4b5563; 
-            color: white; 
-            border-radius: 6px; 
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1); 
-            font-size: 12px; 
-            font-weight: bold; 
-            border: none; 
-            cursor: pointer; 
-            transition: background-color 0.2s; 
-        }
+        .btn-back { margin-top: 8px; padding: 6px 20px; background-color: #4b5563; color: white; border-radius: 6px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); font-size: 12px; font-weight: bold; border: none; cursor: pointer; transition: background-color 0.2s; }
         .btn-back:hover { background-color: #374151; }
-
         .text-battery { font-size: 10px; color: var(--text-battery); font-weight: bold; letter-spacing: 0.05em; }
         .theme-option { display: flex; align-items: center; width: 100%; padding: 6px; margin: 2px 0; border: 1px solid #eee; border-radius: 6px; cursor: pointer; flex-shrink: 0; font-size: 12px; }
         .theme-preview { width: 20px; height: 20px; border-radius: 50%; margin-right: 10px; border: 2px solid rgba(0,0,0,0.1); }
@@ -173,8 +129,7 @@
                     <!-- Added credentialless to help with some COEP cases -->
                     <iframe id="game-iframe" credentialless src="about:blank" allow="autoplay; fullscreen; gamepad; accelerometer; gyroscope; clipboard-write" sandbox="allow-forms allow-pointer-lock allow-popups allow-same-origin allow-scripts" referrerpolicy="no-referrer"></iframe>
                     
-                    <!-- ID 'canvas' as requested, with dimensions -->
-                    <canvas id="canvas" width="240" height="160"></canvas>
+                    <!-- ID 'canvas' is created dynamically now -->
                     
                     <div id="main-menu" class="menu-ui">
                         <h2 class="text-lg font-bold mb-3 text-gray-800 tracking-wider">MENU</h2>
@@ -498,13 +453,9 @@
                 } catch(e) { console.error("Error stopping mGBA:", e); }
             }
             
-            const canvas = document.getElementById('canvas');
-            if (canvas) {
-                // Clear the canvas to black
-                const ctx = canvas.getContext('2d');
-                if (ctx) ctx.clearRect(0, 0, canvas.width, canvas.height);
-                canvas.style.display = 'none';
-            }
+            // Clean up the canvas if it exists
+            const existingCanvas = document.getElementById('canvas');
+            if (existingCanvas) existingCanvas.remove();
             
             document.getElementById('power-led').classList.remove('on');
             gameMode = null;
@@ -571,10 +522,19 @@
                 location.reload(); 
                 return;
             }
+            
+            // --- CONTEXT RESTORATION FIX ---
+            // Create a brand new canvas every time to prevent WebGL/Context loss
+            const canvas = document.createElement('canvas');
+            canvas.id = 'canvas';
+            canvas.width = 240;
+            canvas.height = 160;
+            canvas.style.display = 'block'; // Ensure visible
+            // Re-insert into DOM
+            const lcdScreen = document.getElementById('lcd-screen');
+            const mainMenu = document.getElementById('main-menu'); // Insert before menu
+            lcdScreen.insertBefore(canvas, mainMenu);
 
-            // 1. Invisible Screen Fix: Use the standard ID 'canvas'
-            const canvas = document.getElementById('canvas');
-            canvas.style.display = 'block';
             document.getElementById('start-screen').style.display = 'none';
             document.getElementById('game-iframe').style.display = 'none';
 
@@ -601,6 +561,8 @@
                 // 1. Initialize the Module with our config
                 const Module = await moduleFactory(config);
                 window.Module = Module; // Update global ref
+                // Explicitly set canvas on Module instance just in case
+                Module.canvas = canvas;
 
                 debugLog("mGBA Module Loaded.");
 
@@ -733,8 +695,12 @@
                     const monkeyPatchScript = `<script>(function(){const assets=${JSON.stringify(fileMap)};const originalFetch=window.fetch;window.fetch=async function(input,init){let url=input;if(typeof input==='object'&&input.url)url=input.url;for(const key in assets){if(url.endsWith(key)||url.includes(key)){return originalFetch(assets[key],init);}}return originalFetch(input,init);};const observer=new MutationObserver(mutations=>{mutations.forEach(mutation=>{if(mutation.type==='childList'){mutation.addedNodes.forEach(node=>{if(node.tagName==='IMG'||node.tagName==='SCRIPT'||node.tagName==='LINK'){rewriteSrc(node);}if(node.querySelectorAll){node.querySelectorAll('img, script, link').forEach(rewriteSrc);}});}else if(mutation.type==='attributes'){rewriteSrc(mutation.target);}});});function rewriteSrc(node){const attr=node.tagName==='LINK'?'href':'src';const val=node.getAttribute(attr);if(val){const cleanVal=val.replace(/^\\.\\/|^\\//,'');for(const key in assets){if(cleanVal.endsWith(key)){if(val.startsWith('blob:'))return;node.setAttribute(attr,assets[key]);return;}}}}observer.observe(document,{childList:true,subtree:true,attributes:true,attributeFilter:['src','href']});window.addEventListener('DOMContentLoaded', ()=>{document.querySelectorAll('img, script, link').forEach(rewriteSrc);});})();<\/script>`;
                     htmlContent = htmlContent.replace('<head>', '<head>' + monkeyPatchScript);
                     const finalBlob = new Blob([htmlContent], { type: 'text/html' }); const finalUrl = URL.createObjectURL(finalBlob);
-                    const iframe = document.getElementById('game-iframe'); const romCanvas = document.getElementById('canvas'); const startScreen = document.getElementById('start-screen'); const powerLed = document.getElementById('power-led');
-                    iframe.onload = () => { iframe.onload = null; gameMode = 'html'; iframe.style.display = 'block'; romCanvas.style.display = 'none'; startScreen.style.display = 'none'; iframe.contentWindow.focus(); powerLed.classList.add('on'); loadingOverlay.style.display = 'none'; document.getElementById('btn-menu-exit-game').style.display = 'block'; }; iframe.src = finalUrl;
+                    const iframe = document.getElementById('game-iframe'); 
+                    
+                    // Canvas removed in stopCurrentGame()
+                    
+                    const startScreen = document.getElementById('start-screen'); const powerLed = document.getElementById('power-led');
+                    iframe.onload = () => { iframe.onload = null; gameMode = 'html'; iframe.style.display = 'block'; startScreen.style.display = 'none'; iframe.contentWindow.focus(); powerLed.classList.add('on'); loadingOverlay.style.display = 'none'; document.getElementById('btn-menu-exit-game').style.display = 'block'; }; iframe.src = finalUrl;
                 }).catch(err => { console.error(err); alert("Failed to unzip game: " + err.message); loadingOverlay.style.display = 'none'; });
             }; reader.readAsArrayBuffer(file);
         }
@@ -744,7 +710,7 @@
             
             stopCurrentGame(); // Strict Cleanup
 
-            const iframe = document.getElementById('game-iframe'); const romCanvas = document.getElementById('canvas'); const powerLed = document.getElementById('power-led'); const startScreen = document.getElementById('start-screen');
+            const iframe = document.getElementById('game-iframe'); const powerLed = document.getElementById('power-led'); const startScreen = document.getElementById('start-screen');
             powerLed.classList.remove('on'); 
             if (file.type !== 'text/html' && !file.name.endsWith('.html')) return;
             const reader = new FileReader();
@@ -753,7 +719,7 @@
                 const fitStyle = `<style>html,body{margin:0;padding:0;width:100vw;height:100vh;overflow:hidden;background:transparent;display:flex;justify-content:center;align-items:center;}canvas{max-width:100%;max-height:100%;object-fit:contain;transform:translateZ(0);will-change:transform;}</style>`;
                 const bridgeScript = `<script>window.addEventListener('message',function(e){if(e.data.type==='keydown'||e.data.type==='keyup'){var ev=new KeyboardEvent(e.data.type,{key:e.data.key,code:e.data.code,keyCode:e.data.keyCode,which:e.data.keyCode,bubbles:true,cancelable:true,view:window});document.dispatchEvent(ev);window.dispatchEvent(ev);}});<\/script>`;
                 htmlContent = fitStyle + htmlContent + bridgeScript;
-                try { const blob = new Blob([htmlContent], { type: 'text/html' }); const blobUrl = URL.createObjectURL(blob); iframe.onload = () => { URL.revokeObjectURL(blobUrl); closeAllMenus(); iframe.onload = null; gameMode = 'html'; iframe.style.display = 'block'; romCanvas.style.display = 'none'; startScreen.style.display = 'none'; iframe.contentWindow.focus(); powerLed.classList.add('on'); document.getElementById('btn-menu-exit-game').style.display = 'block'; }; iframe.src = blobUrl; } catch (error) { }
+                try { const blob = new Blob([htmlContent], { type: 'text/html' }); const blobUrl = URL.createObjectURL(blob); iframe.onload = () => { URL.revokeObjectURL(blobUrl); closeAllMenus(); iframe.onload = null; gameMode = 'html'; iframe.style.display = 'block'; startScreen.style.display = 'none'; iframe.contentWindow.focus(); powerLed.classList.add('on'); document.getElementById('btn-menu-exit-game').style.display = 'block'; }; iframe.src = blobUrl; } catch (error) { }
             }; reader.readAsText(file);
         }
 

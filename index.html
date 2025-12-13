@@ -55,12 +55,56 @@
         .nann-pill { border: 3px solid #000000; border-radius: 50px; padding: 4px 24px; display: inline-block; margin-bottom: 20px; background: transparent; }
         .nann-logo-text { font-family: 'Inter', sans-serif; font-weight: 900; font-size: 28px; color: #000000; letter-spacing: 1px; line-height: 1; }
         
-        .menu-btn { width: 90%; padding: 5px 0; margin: 2px 0; background-color: #f3f4f6; border: 2px solid #d1d5db; border-radius: 6px; font-weight: bold; font-size: 12px; color: #374151; text-align: center; cursor: pointer; transition: all 0.2s; flex-shrink: 0; }
+        /* Compact Menu Buttons */
+        .menu-btn { 
+            width: 90%; 
+            padding: 5px 0;
+            margin: 2px 0;
+            background-color: #f3f4f6; 
+            border: 2px solid #d1d5db; 
+            border-radius: 6px;
+            font-weight: bold; 
+            font-size: 12px;
+            color: #374151; 
+            text-align: center; 
+            cursor: pointer; 
+            transition: all 0.2s; 
+            flex-shrink: 0; 
+        }
         .menu-btn:active { background-color: #e5e7eb; transform: scale(0.98); }
-        .btn-red { margin-top: 8px; padding: 6px 20px; background-color: #dc2626; color: white; border-radius: 6px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); font-size: 12px; font-weight: bold; border: none; cursor: pointer; transition: background-color 0.2s; }
+
+        /* Compact Red Button */
+        .btn-red { 
+            margin-top: 8px;
+            padding: 6px 20px; 
+            background-color: #dc2626; 
+            color: white; 
+            border-radius: 6px; 
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1); 
+            font-size: 12px; 
+            font-weight: bold; 
+            border: none; 
+            cursor: pointer; 
+            transition: background-color 0.2s; 
+        }
         .btn-red:hover { background-color: #b91c1c; }
-        .btn-back { margin-top: 8px; padding: 6px 20px; background-color: #4b5563; color: white; border-radius: 6px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); font-size: 12px; font-weight: bold; border: none; cursor: pointer; transition: background-color 0.2s; }
+        
+        /* Compact Back Button */
+        .btn-back { 
+            margin-top: 8px; 
+            padding: 6px 20px; 
+            background-color: #4b5563; 
+            color: white; 
+            border-radius: 6px; 
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1); 
+            font-size: 12px; 
+            font-weight: bold; 
+            border: none; 
+            cursor: pointer; 
+            transition: background-color 0.2s; 
+        }
         .btn-back:hover { background-color: #374151; }
+
         .text-battery { font-size: 10px; color: var(--text-battery); font-weight: bold; letter-spacing: 0.05em; }
         .theme-option { display: flex; align-items: center; width: 100%; padding: 6px; margin: 2px 0; border: 1px solid #eee; border-radius: 6px; cursor: pointer; flex-shrink: 0; font-size: 12px; }
         .theme-preview { width: 20px; height: 20px; border-radius: 50%; margin-right: 10px; border: 2px solid rgba(0,0,0,0.1); }
@@ -451,9 +495,12 @@
                     if (window.Module.quitGame) window.Module.quitGame();
                     else if (window.Module.pauseGame) window.Module.pauseGame();
                 } catch(e) { console.error("Error stopping mGBA:", e); }
+                
+                // Dereference
+                window.Module = null;
             }
             
-            // Clean up the canvas if it exists
+            // Clean up the canvas if it exists (Force Context Loss)
             const existingCanvas = document.getElementById('canvas');
             if (existingCanvas) existingCanvas.remove();
             
@@ -513,24 +560,15 @@
                     </div>`;
             }
 
-            // Reuse Module if already loaded (Smooth Switching)
-            if (window.Module && window.Module.loadGame) {
-                // FORCE RELOAD FOR ROM SWITCHING TO PREVENT MEMORY CRASH
-                try {
-                    window.Module.quitGame();
-                } catch(e) {}
-                location.reload(); 
-                return;
-            }
-            
             // --- CONTEXT RESTORATION FIX ---
             // Create a brand new canvas every time to prevent WebGL/Context loss
             const canvas = document.createElement('canvas');
             canvas.id = 'canvas';
             canvas.width = 240;
             canvas.height = 160;
-            canvas.style.display = 'block'; // Ensure visible
-            // Re-insert into DOM
+            canvas.style.display = 'block'; 
+            
+            // Insert correctly in DOM
             const lcdScreen = document.getElementById('lcd-screen');
             const mainMenu = document.getElementById('main-menu'); // Insert before menu
             lcdScreen.insertBefore(canvas, mainMenu);
@@ -592,29 +630,44 @@
                 if (Module.loadGame) {
                      debugLog("Calling loadGame()...");
 
-                     // DISABLE REWIND IMMEDIATELY to prevent memory crashes
+                     // CRITICAL FIX 1: Disable Rewind BEFORE loading to save memory
                      if (Module.toggleRewind) {
-                         debugLog("Disabling Rewind...");
-                         try {
-                            Module.toggleRewind(false);
-                         } catch(e) {
-                             console.warn("Could not disable rewind:", e);
-                         }
+                         // Some builds default to enabled. Force disable.
+                         Module.toggleRewind(false);
                      }
 
                      Module.loadGame(safeName);
                      gameMode = 'rom'; // Update global mode
                      
+                     // CRITICAL FIX 2: Ensure Rewind is DEAD.
+                     // Sometimes it re-enables on load. Check again after a delay.
+                     setTimeout(() => {
+                         if (Module.toggleRewind) {
+                             debugLog("Disabling Rewind (Delayed)...");
+                             Module.toggleRewind(false);
+                         }
+                     }, 1000); // Wait 1s
+
                      // Turn on LED
                      document.getElementById('power-led').classList.add('on');
                      document.getElementById('btn-menu-exit-game').style.display = 'block'; // SHOW EXIT BUTTON
                      if(loadingOverlay) loadingOverlay.style.display = 'none';
                      
-                     // Resume Audio
-                     const audioContext = Module.SDL2?.audioContext || Module.audioContext;
-                     if (audioContext && audioContext.state === 'suspended') {
-                         audioContext.resume();
-                     }
+                     // CRITICAL FIX 3: Audio Resume on Interaction
+                     // The "slow" start is usually the browser waiting for a user gesture to start the AudioContext.
+                     const resumeAudio = () => {
+                         const audio = Module.SDL2?.audioContext || Module.audioContext;
+                         if (audio && audio.state !== 'running') {
+                             audio.resume();
+                         }
+                     };
+                     // Try immediately
+                     resumeAudio();
+                     // And attach to all inputs to catch it early
+                     ['keydown', 'mousedown', 'touchstart'].forEach(evt => 
+                        window.addEventListener(evt, resumeAudio, { once: true, capture: true })
+                     );
+
                 } else {
                      debugLog("CRITICAL: Module.loadGame not found!", "error");
                 }
@@ -710,7 +763,7 @@
             
             stopCurrentGame(); // Strict Cleanup
 
-            const iframe = document.getElementById('game-iframe'); const powerLed = document.getElementById('power-led'); const startScreen = document.getElementById('start-screen');
+            const iframe = document.getElementById('game-iframe'); const romCanvas = document.getElementById('canvas'); const powerLed = document.getElementById('power-led'); const startScreen = document.getElementById('start-screen');
             powerLed.classList.remove('on'); 
             if (file.type !== 'text/html' && !file.name.endsWith('.html')) return;
             const reader = new FileReader();
@@ -719,7 +772,7 @@
                 const fitStyle = `<style>html,body{margin:0;padding:0;width:100vw;height:100vh;overflow:hidden;background:transparent;display:flex;justify-content:center;align-items:center;}canvas{max-width:100%;max-height:100%;object-fit:contain;transform:translateZ(0);will-change:transform;}</style>`;
                 const bridgeScript = `<script>window.addEventListener('message',function(e){if(e.data.type==='keydown'||e.data.type==='keyup'){var ev=new KeyboardEvent(e.data.type,{key:e.data.key,code:e.data.code,keyCode:e.data.keyCode,which:e.data.keyCode,bubbles:true,cancelable:true,view:window});document.dispatchEvent(ev);window.dispatchEvent(ev);}});<\/script>`;
                 htmlContent = fitStyle + htmlContent + bridgeScript;
-                try { const blob = new Blob([htmlContent], { type: 'text/html' }); const blobUrl = URL.createObjectURL(blob); iframe.onload = () => { URL.revokeObjectURL(blobUrl); closeAllMenus(); iframe.onload = null; gameMode = 'html'; iframe.style.display = 'block'; startScreen.style.display = 'none'; iframe.contentWindow.focus(); powerLed.classList.add('on'); document.getElementById('btn-menu-exit-game').style.display = 'block'; }; iframe.src = blobUrl; } catch (error) { }
+                try { const blob = new Blob([htmlContent], { type: 'text/html' }); const blobUrl = URL.createObjectURL(blob); iframe.onload = () => { URL.revokeObjectURL(blobUrl); closeAllMenus(); iframe.onload = null; gameMode = 'html'; iframe.style.display = 'block'; romCanvas.style.display = 'none'; startScreen.style.display = 'none'; iframe.contentWindow.focus(); powerLed.classList.add('on'); document.getElementById('btn-menu-exit-game').style.display = 'block'; }; iframe.src = blobUrl; } catch (error) { }
             }; reader.readAsText(file);
         }
 

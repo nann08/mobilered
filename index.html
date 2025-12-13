@@ -143,10 +143,27 @@
         #close-install { position: absolute; top: 5px; right: 10px; font-weight: bold; color: #9ca3af; cursor: pointer; }
         #toast-notification { position: absolute; bottom: 80px; left: 50%; transform: translateX(-50%); background-color: #1f2937; color: white; padding: 4px 10px; border-radius: 9999px; font-size: 0.75rem; font-weight: bold; opacity: 0; pointer-events: none; transition: opacity 0.3s; z-index: 300; }
         
-        #debug-console { position: absolute; bottom: 0; left: 0; right: 0; height: 100px; background: rgba(0,0,0,0.9); color: #00ff00; font-family: monospace; font-size: 10px; padding: 5px; overflow-y: scroll; z-index: 2000; display: none; pointer-events: none; }
-        .debug-error { color: #ff5555; font-weight: bold; }
-        .debug-warn { color: #ffaa00; }
-        .debug-info { color: #88ccff; }
+        /* BOOT ANIMATION STYLES */
+        @keyframes bootDrop {
+            0% { transform: translateY(-50px); opacity: 0; }
+            40% { transform: translateY(0); opacity: 1; }
+            100% { transform: translateY(0); opacity: 1; }
+        }
+        .boot-logo {
+            font-family: 'Inter', sans-serif;
+            font-weight: 900;
+            font-size: 24px;
+            color: #000; /* Dark color for the logo, classic GB style */
+            letter-spacing: 2px;
+            animation: bootDrop 2s ease-out forwards;
+        }
+        @keyframes progressFill {
+            0% { width: 0%; }
+            100% { width: 100%; }
+        }
+        .animate-progress {
+            animation: progressFill 3s ease-out forwards;
+        }
     </style>
 </head>
 <body oncontextmenu="return false;">
@@ -163,11 +180,18 @@
             <div class="gbc-screen-lens">
                 <div class="lens-branding"><div class="power-led" id="power-led"></div><div class="text-battery">BATTERY</div></div>
                 <div class="lcd-screen" id="lcd-screen">
-                    <div id="loading-overlay" class="text-white text-center absolute flex flex-col items-center justify-center" style="z-index: 30;">
-                        <svg class="animate-spin h-6 w-6 text-white mb-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
-                        <span id="loading-text">Initializing...</span>
+                    <!-- CUSTOM BOOT ANIMATION OVERLAY -->
+                    <!-- This covers the screen while mGBA boots up. Background matches --screen-color. -->
+                    <div id="loading-overlay" class="absolute inset-0 flex flex-col items-center justify-center z-50" style="background-color: var(--screen-color); display: none;">
+                        <div class="boot-logo">NANN BOY</div>
+                        <div class="mt-4">
+                            <div class="w-16 h-1 bg-gray-300 rounded overflow-hidden">
+                                <div class="h-full bg-blue-600 animate-progress"></div>
+                            </div>
+                        </div>
+                        <div id="loading-text" class="mt-2 text-xs text-gray-400 font-bold tracking-wide">INITIALIZING</div>
                     </div>
-                    <div id="debug-console"></div>
+                    
                     <div id="start-screen"><div class="nann-pill"><div class="nann-logo-text">NANN BOY</div></div></div>
                     
                     <!-- Added credentialless to help with some COEP cases -->
@@ -230,15 +254,7 @@
 
         // DEBUG SYSTEM
         function debugLog(msg, type='info') {
-            const consoleEl = document.getElementById('debug-console');
-            if (consoleEl) {
-                consoleEl.style.display = 'block';
-                const entry = document.createElement('div');
-                entry.textContent = `> ${msg}`;
-                entry.className = `debug-${type}`;
-                consoleEl.appendChild(entry);
-                consoleEl.scrollTop = consoleEl.scrollHeight;
-            }
+            // Only log to browser console now
             console.log(`[Emulator] ${msg}`);
         }
 
@@ -547,17 +563,17 @@
             closeAllMenus();
             stopCurrentGame(); // Strict Cleanup
 
+            // Custom Loading Overlay with Boot Animation
             const loadingOverlay = document.getElementById('loading-overlay');
             if(loadingOverlay) {
                 loadingOverlay.style.display = 'flex';
-                loadingOverlay.innerHTML = `
-                    <div class="flex flex-col items-center">
-                        <svg class="animate-spin h-6 w-6 text-white mb-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                        </svg>
-                        <span id="loading-text">Starting mGBA Core...</span>
-                    </div>`;
+                // Reset animation
+                const logo = loadingOverlay.querySelector('.boot-logo');
+                if(logo) {
+                    logo.style.animation = 'none';
+                    logo.offsetHeight; /* trigger reflow */
+                    logo.style.animation = 'bootDrop 2s ease-out forwards';
+                }
             }
 
             // --- CONTEXT RESTORATION FIX ---
@@ -653,7 +669,11 @@
                      // Turn on LED
                      document.getElementById('power-led').classList.add('on');
                      document.getElementById('btn-menu-exit-game').style.display = 'block'; // SHOW EXIT BUTTON
-                     if(loadingOverlay) loadingOverlay.style.display = 'none';
+                     
+                     // Hide loading overlay after a short delay to let boot animation finish/game start
+                     setTimeout(() => {
+                        if(loadingOverlay) loadingOverlay.style.display = 'none';
+                     }, 2000);
                      
                      // Resume Audio
                      const audioContext = Module.SDL2?.audioContext || Module.audioContext;
@@ -718,7 +738,11 @@
             stopCurrentGame(); // Strict Cleanup
 
             const loadingOverlay = document.getElementById('loading-overlay');
-            if(loadingOverlay) { loadingOverlay.style.display = 'flex'; loadingOverlay.innerHTML = `<span id="loading-text">Unzipping Game...</span>`; }
+            if(loadingOverlay) { 
+                loadingOverlay.style.display = 'flex'; 
+                // Simple Loading text for HTML games, reset boot anim if needed
+                loadingOverlay.innerHTML = `<span class="text-gray-500 font-bold">LOADING...</span>`;
+            }
             const reader = new FileReader();
             reader.onload = function(e) {
                 JSZip.loadAsync(e.target.result).then(async function(zip) {
@@ -755,7 +779,7 @@
             
             stopCurrentGame(); // Strict Cleanup
 
-            const iframe = document.getElementById('game-iframe'); const romCanvas = document.getElementById('canvas'); const powerLed = document.getElementById('power-led'); const startScreen = document.getElementById('start-screen');
+            const iframe = document.getElementById('game-iframe'); const powerLed = document.getElementById('power-led'); const startScreen = document.getElementById('start-screen');
             powerLed.classList.remove('on'); 
             if (file.type !== 'text/html' && !file.name.endsWith('.html')) return;
             const reader = new FileReader();
@@ -764,7 +788,7 @@
                 const fitStyle = `<style>html,body{margin:0;padding:0;width:100vw;height:100vh;overflow:hidden;background:transparent;display:flex;justify-content:center;align-items:center;}canvas{max-width:100%;max-height:100%;object-fit:contain;transform:translateZ(0);will-change:transform;}</style>`;
                 const bridgeScript = `<script>window.addEventListener('message',function(e){if(e.data.type==='keydown'||e.data.type==='keyup'){var ev=new KeyboardEvent(e.data.type,{key:e.data.key,code:e.data.code,keyCode:e.data.keyCode,which:e.data.keyCode,bubbles:true,cancelable:true,view:window});document.dispatchEvent(ev);window.dispatchEvent(ev);}});<\/script>`;
                 htmlContent = fitStyle + htmlContent + bridgeScript;
-                try { const blob = new Blob([htmlContent], { type: 'text/html' }); const blobUrl = URL.createObjectURL(blob); iframe.onload = () => { URL.revokeObjectURL(blobUrl); closeAllMenus(); iframe.onload = null; gameMode = 'html'; iframe.style.display = 'block'; romCanvas.style.display = 'none'; startScreen.style.display = 'none'; iframe.contentWindow.focus(); powerLed.classList.add('on'); document.getElementById('btn-menu-exit-game').style.display = 'block'; }; iframe.src = blobUrl; } catch (error) { }
+                try { const blob = new Blob([htmlContent], { type: 'text/html' }); const blobUrl = URL.createObjectURL(blob); iframe.onload = () => { URL.revokeObjectURL(blobUrl); closeAllMenus(); iframe.onload = null; gameMode = 'html'; iframe.style.display = 'block'; startScreen.style.display = 'none'; iframe.contentWindow.focus(); powerLed.classList.add('on'); document.getElementById('btn-menu-exit-game').style.display = 'block'; }; iframe.src = blobUrl; } catch (error) { }
             }; reader.readAsText(file);
         }
 

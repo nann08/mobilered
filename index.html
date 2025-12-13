@@ -317,9 +317,8 @@
         // --- INPUT HANDLING ---
         function sendInput(label, isDown) { 
             // Try to use direct API if available
-            if (window.Module) {
+            if (window.Module && gameMode === 'rom') {
                 let btnName = null;
-                // Map local labels to mGBA input names (often uppercase)
                 const map = {
                     'A': 'A', 'B': 'B', 
                     'Start': 'START', 'Select': 'SELECT', 
@@ -332,12 +331,12 @@
                     try {
                         if (isDown && window.Module.buttonPress) {
                             window.Module.buttonPress(btnName);
-                            return; // Success
+                            return; 
                         } else if (!isDown && window.Module.buttonUnpress) {
                             window.Module.buttonUnpress(btnName);
-                            return; // Success
+                            return; 
                         }
-                    } catch(e) { /* Fallback to keyboard if this fails */ }
+                    } catch(e) { }
                 }
             }
 
@@ -395,7 +394,7 @@
         
         function openMenu(menuId) { 
             document.querySelectorAll('.menu-ui').forEach(el => { 
-                if (el.id !== 'game-iframe' && el.id !== 'start-screen' && el.id !== 'rom-canvas') {
+                if (el.id !== 'game-iframe' && el.id !== 'start-screen' && el.id !== 'canvas') {
                     el.style.display = 'none'; 
                 }
             }); 
@@ -410,7 +409,7 @@
 
         function closeAllMenus() { 
             document.querySelectorAll('.menu-ui').forEach(el => { 
-                if (el.id !== 'game-iframe' && el.id !== 'start-screen' && el.id !== 'rom-canvas') {
+                if (el.id !== 'game-iframe' && el.id !== 'start-screen' && el.id !== 'canvas') {
                     el.style.display = 'none'; 
                 }
             }); 
@@ -608,7 +607,7 @@
                     const monkeyPatchScript = `<script>(function(){const assets=${JSON.stringify(fileMap)};const originalFetch=window.fetch;window.fetch=async function(input,init){let url=input;if(typeof input==='object'&&input.url)url=input.url;for(const key in assets){if(url.endsWith(key)||url.includes(key)){return originalFetch(assets[key],init);}}return originalFetch(input,init);};const observer=new MutationObserver(mutations=>{mutations.forEach(mutation=>{if(mutation.type==='childList'){mutation.addedNodes.forEach(node=>{if(node.tagName==='IMG'||node.tagName==='SCRIPT'||node.tagName==='LINK'){rewriteSrc(node);}if(node.querySelectorAll){node.querySelectorAll('img, script, link').forEach(rewriteSrc);}});}else if(mutation.type==='attributes'){rewriteSrc(mutation.target);}});});function rewriteSrc(node){const attr=node.tagName==='LINK'?'href':'src';const val=node.getAttribute(attr);if(val){const cleanVal=val.replace(/^\\.\\/|^\\//,'');for(const key in assets){if(cleanVal.endsWith(key)){if(val.startsWith('blob:'))return;node.setAttribute(attr,assets[key]);return;}}}}observer.observe(document,{childList:true,subtree:true,attributes:true,attributeFilter:['src','href']});window.addEventListener('DOMContentLoaded', ()=>{document.querySelectorAll('img, script, link').forEach(rewriteSrc);});})();<\/script>`;
                     htmlContent = htmlContent.replace('<head>', '<head>' + monkeyPatchScript);
                     const finalBlob = new Blob([htmlContent], { type: 'text/html' }); const finalUrl = URL.createObjectURL(finalBlob);
-                    const iframe = document.getElementById('game-iframe'); const romCanvas = document.getElementById('rom-canvas'); const startScreen = document.getElementById('start-screen'); const powerLed = document.getElementById('power-led');
+                    const iframe = document.getElementById('game-iframe'); const romCanvas = document.getElementById('canvas'); const startScreen = document.getElementById('start-screen'); const powerLed = document.getElementById('power-led');
                     iframe.onload = () => { iframe.onload = null; gameMode = 'html'; iframe.style.display = 'block'; romCanvas.style.display = 'none'; startScreen.style.display = 'none'; iframe.contentWindow.focus(); powerLed.classList.add('on'); loadingOverlay.style.display = 'none'; }; iframe.src = finalUrl;
                 }).catch(err => { console.error(err); alert("Failed to unzip game: " + err.message); loadingOverlay.style.display = 'none'; });
             }; reader.readAsArrayBuffer(file);
@@ -616,7 +615,7 @@
 
         function handleHtmlUpload(event) {
             const file = event.target.files[0]; if (!file) return;
-            const iframe = document.getElementById('game-iframe'); const romCanvas = document.getElementById('rom-canvas'); const powerLed = document.getElementById('power-led'); const startScreen = document.getElementById('start-screen');
+            const iframe = document.getElementById('game-iframe'); const romCanvas = document.getElementById('canvas'); const powerLed = document.getElementById('power-led'); const startScreen = document.getElementById('start-screen');
             powerLed.classList.remove('on'); 
             if (file.type !== 'text/html' && !file.name.endsWith('.html')) return;
             const reader = new FileReader();

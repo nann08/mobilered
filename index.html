@@ -31,7 +31,6 @@
         .lcd-screen { background-color: var(--screen-color); width: 320px; height: 240px; box-shadow: inset 3px 3px 10px rgba(0,0,0,0.8); overflow: hidden; display: flex; align-items: center; justify-content: center; position: relative; transform: translate3d(0,0,0); backface-visibility: hidden; contain: paint; }
         .lcd-screen::before { content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: repeating-linear-gradient(to bottom, rgba(0,0,0,0.05) 0px, rgba(0,0,0,0.05) 1px, transparent 1px, transparent 2px), repeating-linear-gradient(to right, rgba(0,0,0,0.02) 0px, rgba(0,0,0,0.02) 1px, transparent 1px, transparent 2px); pointer-events: none; z-index: 200; }
         
-        /* Iframe with credentialless to try and help with COEP */
         iframe, canvas#canvas { width: 100%; height: 100%; border: none; background-color: #000; display: none; image-rendering: pixelated; }
         
         .menu-ui { 
@@ -548,13 +547,7 @@
         // This function builds the Module object and injects the script
         async function launchMgba(romBuffer, romName) {
             closeAllMenus();
-            
-            // CLEANUP: Hide HTML Game if active
-            const iframe = document.getElementById('game-iframe');
-            if (gameMode === 'html') {
-                iframe.style.display = 'none';
-                iframe.src = 'about:blank';
-            }
+            stopCurrentGame(); // Strict Cleanup
 
             const loadingOverlay = document.getElementById('loading-overlay');
             if(loadingOverlay) {
@@ -575,6 +568,7 @@
                 const canvas = document.getElementById('canvas');
                 canvas.style.display = 'block';
                 document.getElementById('start-screen').style.display = 'none';
+                gameMode = 'rom'; // Update global mode
                 
                 // Write File
                 const ext = romName.split('.').pop();
@@ -588,6 +582,11 @@
                 
                 // Resume game if it was paused
                 try {
+                    // DISABLE REWIND to prevent memory crashes
+                    if (window.Module.toggleRewind) {
+                        window.Module.toggleRewind(false);
+                    }
+
                     window.Module.loadGame(safeName);
                     // Resume audio context if needed
                     const audioContext = window.Module.SDL2?.audioContext || window.Module.audioContext;
@@ -665,7 +664,15 @@
                 // 4. Start Game using Official API
                 if (Module.loadGame) {
                      debugLog("Calling loadGame()...");
+
+                     // DISABLE REWIND to prevent memory crashes
+                     if (Module.toggleRewind) {
+                         debugLog("Disabling Rewind to save memory...");
+                         Module.toggleRewind(false);
+                     }
+
                      Module.loadGame(safeName);
+                     gameMode = 'rom'; // Update global mode
                      
                      // Turn on LED
                      document.getElementById('power-led').classList.add('on');
@@ -699,7 +706,6 @@
             const isRom = file.name.match(/\.(gb|gbc|gba)$/i); 
 
             if (!isZip && !isRom) { return; }
-            gameMode = 'rom';
             
             const processRom = (buffer, name) => {
                 launchMgba(buffer, name);

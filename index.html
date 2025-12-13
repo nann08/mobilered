@@ -15,11 +15,9 @@
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 
-    <!-- Tailwind -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
     <style>
-        /* ... existing styles ... */
         *, *::before, *::after { box-sizing: border-box; -webkit-tap-highlight-color: transparent; -webkit-touch-callout: none; user-select: none; }
         :root { --screen-color: #ffffff; --screen-shadow: #0f380f; --safe-top: env(safe-area-inset-top, 20px); --safe-bottom: env(safe-area-inset-bottom, 20px); --console-main: #E83942; --console-dark: #b91c1c; --bg-color: #7f1d1d; --btn-color: #1c1c1c; --dpad-color: #1c1c1c; --text-battery: #a1a1aa; }
         html, body { width: 100%; height: 100%; margin: 0; padding: 0; overscroll-behavior: none; position: fixed; overflow: hidden; background-color: var(--bg-color); transition: background-color 0.3s ease; font-family: 'Inter', sans-serif; display: flex; align-items: flex-start; justify-content: center; }
@@ -129,7 +127,7 @@
                     
                     <iframe id="game-iframe" src="about:blank" allow="autoplay; fullscreen; gamepad; accelerometer; gyroscope; clipboard-write" sandbox="allow-forms allow-pointer-lock allow-popups allow-same-origin allow-scripts" referrerpolicy="no-referrer"></iframe>
                     
-                    <!-- ID 'canvas' with dimensions -->
+                    <!-- ID 'canvas' as requested, with dimensions -->
                     <canvas id="canvas" width="240" height="160"></canvas>
                     
                     <div id="main-menu" class="menu-ui">
@@ -318,6 +316,32 @@
         
         // --- INPUT HANDLING ---
         function sendInput(label, isDown) { 
+            // Try to use direct API if available
+            if (window.Module) {
+                let btnName = null;
+                // Map local labels to mGBA input names (often uppercase)
+                const map = {
+                    'A': 'A', 'B': 'B', 
+                    'Start': 'START', 'Select': 'SELECT', 
+                    'Up': 'UP', 'Down': 'DOWN', 'Left': 'LEFT', 'Right': 'RIGHT',
+                    'L': 'L', 'R': 'R'
+                };
+                if (map[label]) btnName = map[label];
+                
+                if (btnName) {
+                    try {
+                        if (isDown && window.Module.buttonPress) {
+                            window.Module.buttonPress(btnName);
+                            return; // Success
+                        } else if (!isDown && window.Module.buttonUnpress) {
+                            window.Module.buttonUnpress(btnName);
+                            return; // Success
+                        }
+                    } catch(e) { /* Fallback to keyboard if this fails */ }
+                }
+            }
+
+            // Fallback: Keyboard Simulation
             const mapping = keyMap[label];
             if (!mapping) return;
 
@@ -337,7 +361,7 @@
                 return;
             }
 
-            // 2. ROM MODE (mGBA)
+            // 2. ROM MODE (mGBA Fallback)
             if (gameMode === 'rom') {
                  const event = new KeyboardEvent(eventType, {
                     key: mapping.key,
@@ -432,12 +456,9 @@
             }
 
             // Cleanup previous runs if any
-            if (window.Module && window.Module.calledRun) {
-                 if(!confirm("Restarting core requires a reload. Reload now?")) {
-                     loadingOverlay.style.display = 'none';
-                     return;
-                 }
-                 location.reload();
+            if (window.Module && window.Module.quitMgba) {
+                 try { window.Module.quitMgba(); } catch(e) {}
+                 location.reload(); 
                  return;
             }
 
@@ -447,47 +468,15 @@
             document.getElementById('start-screen').style.display = 'none';
             document.getElementById('game-iframe').style.display = 'none';
 
-            // Safety timeout
-            const timeoutId = setTimeout(() => {
-                const overlay = document.getElementById('loading-overlay');
-                if (overlay && overlay.style.display !== 'none') {
-                    overlay.innerHTML = `
-                        <div class="px-4">
-                            <div class="text-red-400 font-bold text-lg mb-2">Core Timeout</div>
-                            <div class="text-xs text-left text-gray-300">
-                                The emulator core failed to start.<br><br>
-                                Possible causes:<br>
-                                1. <strong>mgba.js</strong> or <strong>mgba.wasm</strong> is missing.<br>
-                                2. Syntax Error in core file.<br><br>
-                                <span class="text-yellow-400">Check the Debug Console below for details.</span>
-                            </div>
-                            <button onclick="location.reload()" class="mt-4 px-4 py-2 bg-gray-700 rounded text-sm">Reload Page</button>
-                        </div>
-                    `;
-                    debugLog("Timeout waiting for mGBA runtime initialization.", "error");
-                }
-            }, 8000); // 8 seconds timeout
-
-            // 2. Extension Logic Fix: Preserve original extension
-            const ext = romName.split('.').pop();
-            const safeName = `game.${ext}`; 
-
             // Define Module Config
-            // CRITICAL CHANGE: We initialize first, then configure
             const config = {
                 canvas: canvas,
-                arguments: [safeName], // AUTO-RUN: Pass the game file name here
-                noInitialRun: true, // IMPORTANT: Wait for FSInit
-                
                 locateFile: function(path, prefix) {
                     if (path.endsWith('.wasm')) {
                         return 'mgba.wasm';
                     }
                     return prefix + path;
-                },
-                
-                print: function(text) { debugLog("[mGBA] " + text); },
-                printErr: function(text) { debugLog("[mGBA Error] " + text, "warn"); },
+                }
             };
             
             // Assign to window.Module for compatibility (if needed by other scripts)
@@ -497,7 +486,7 @@
             try {
                 // Dynamic Import
                 const mGBA = await import('./mgba.js');
-                const moduleFactory = mGBA.default; // This is the factory function
+                const moduleFactory = mGBA.default; 
 
                 // 1. Initialize the Module with our config
                 const Module = await moduleFactory(config);
@@ -505,7 +494,7 @@
 
                 debugLog("mGBA Module Loaded.");
 
-                // 2. Initialize File System (CRITICAL step from your snippet)
+                // 2. Initialize File System
                 if (Module.FSInit) {
                     debugLog("Initializing FS...");
                     await Module.FSInit();
@@ -515,44 +504,39 @@
                 }
 
                 // 3. Write ROM File
+                // Use safe name but preserve extension
+                const ext = romName.split('.').pop();
+                const safeName = 'game.' + ext;
+                
                 debugLog("Writing ROM: " + safeName);
-                Module.FS.writeFile(safeName, new Uint8Array(romBuffer));
+                if (Module.FS) {
+                    Module.FS.writeFile(safeName, new Uint8Array(romBuffer));
+                } else if (typeof FS !== 'undefined') {
+                    FS.writeFile(safeName, new Uint8Array(romBuffer));
+                }
                 debugLog("ROM Written.");
 
-                // 4. Start Game
-                clearTimeout(timeoutId);
-                document.getElementById('power-led').classList.add('on');
-                if(loadingOverlay) loadingOverlay.style.display = 'none';
-
-                // Try to start game loop if it's not running
-                if (Module.gameStart) {
-                     debugLog("Calling gameStart()...");
-                     Module.gameStart(safeName);
-                } else if (Module.callMain) {
-                     debugLog("Calling callMain()...");
-                     Module.callMain([safeName]);
-                } else if (Module.run) {
-                     debugLog("Calling run()...");
-                     Module.run(); // Should pick up arguments from config
-                } else if (Module._main) { // Fallback for some Emscripten builds
-                     debugLog("Calling _main directly...");
-                     // Manually calling _main usually requires argc, argv. 
-                     // But if INVOKE_RUN=0, we might need to rely on run() or callMain() which wraps main.
-                     // However, passing 0,0 often "just works" if the args were set in preRun/config.
-                     try {
-                        Module._main(0, 0);
-                     } catch(e) { debugLog("_main crash: " + e, 'error'); }
+                // 4. Start Game using Official API
+                if (Module.loadGame) {
+                     debugLog("Calling loadGame()...");
+                     Module.loadGame(safeName);
+                     
+                     // Turn on LED
+                     document.getElementById('power-led').classList.add('on');
+                     if(loadingOverlay) loadingOverlay.style.display = 'none';
+                     
+                     // Resume Audio
+                     const audioContext = Module.SDL2?.audioContext || Module.audioContext;
+                     if (audioContext && audioContext.state === 'suspended') {
+                         audioContext.resume();
+                     }
                 } else {
-                     debugLog("No explicit start method found. Inspecting Module keys...");
-                     // DEBUG: Print all keys to help identify the start method
-                     const keys = Object.keys(Module).filter(k => typeof Module[k] === 'function').slice(0, 20);
-                     debugLog("Functions found: " + keys.join(", "));
+                     debugLog("CRITICAL: Module.loadGame not found!", "error");
                 }
 
             } catch (e) {
-                clearTimeout(timeoutId);
-                if(loadingOverlay) loadingOverlay.innerHTML = `...error details...`;
-                debugLog("Failed to import/init mgba.js: " + e, "error");
+                if(loadingOverlay) loadingOverlay.innerHTML = `Error: ${e.message}`;
+                debugLog("Failed to init: " + e, "error");
                 console.error(e);
             }
         }

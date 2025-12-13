@@ -630,44 +630,35 @@
                 if (Module.loadGame) {
                      debugLog("Calling loadGame()...");
 
-                     // CRITICAL FIX 1: Disable Rewind BEFORE loading to save memory
-                     if (Module.toggleRewind) {
-                         // Some builds default to enabled. Force disable.
-                         Module.toggleRewind(false);
-                     }
-
                      Module.loadGame(safeName);
                      gameMode = 'rom'; // Update global mode
-                     
-                     // CRITICAL FIX 2: Ensure Rewind is DEAD.
-                     // Sometimes it re-enables on load. Check again after a delay.
-                     setTimeout(() => {
-                         if (Module.toggleRewind) {
-                             debugLog("Disabling Rewind (Delayed)...");
-                             Module.toggleRewind(false);
+
+                     // CRITICAL FIX 1: DISABLE REWIND IMMEDIATELY to prevent memory crashes
+                     if (Module.toggleRewind) {
+                         debugLog("Disabling Rewind...");
+                         try {
+                            Module.toggleRewind(false);
+                         } catch(e) {
+                             console.warn("Could not disable rewind:", e);
                          }
-                     }, 1000); // Wait 1s
+                     }
+                     
+                     // CRITICAL FIX 2: FORCE AUDIO SYNC
+                     // Set Main Loop Timing to Mode 1 (Audio Sync) or 0 (VSync) if drifting
+                     if (Module.setMainLoopTiming) {
+                         Module.setMainLoopTiming(0, 1); // Often fixes drift
+                     }
 
                      // Turn on LED
                      document.getElementById('power-led').classList.add('on');
                      document.getElementById('btn-menu-exit-game').style.display = 'block'; // SHOW EXIT BUTTON
                      if(loadingOverlay) loadingOverlay.style.display = 'none';
                      
-                     // CRITICAL FIX 3: Audio Resume on Interaction
-                     // The "slow" start is usually the browser waiting for a user gesture to start the AudioContext.
-                     const resumeAudio = () => {
-                         const audio = Module.SDL2?.audioContext || Module.audioContext;
-                         if (audio && audio.state !== 'running') {
-                             audio.resume();
-                         }
-                     };
-                     // Try immediately
-                     resumeAudio();
-                     // And attach to all inputs to catch it early
-                     ['keydown', 'mousedown', 'touchstart'].forEach(evt => 
-                        window.addEventListener(evt, resumeAudio, { once: true, capture: true })
-                     );
-
+                     // Resume Audio
+                     const audioContext = Module.SDL2?.audioContext || Module.audioContext;
+                     if (audioContext && audioContext.state === 'suspended') {
+                         audioContext.resume();
+                     }
                 } else {
                      debugLog("CRITICAL: Module.loadGame not found!", "error");
                 }

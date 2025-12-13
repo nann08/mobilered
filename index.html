@@ -31,21 +31,22 @@
         .lcd-screen { background-color: var(--screen-color); width: 320px; height: 240px; box-shadow: inset 3px 3px 10px rgba(0,0,0,0.8); overflow: hidden; display: flex; align-items: center; justify-content: center; position: relative; transform: translate3d(0,0,0); backface-visibility: hidden; contain: paint; }
         .lcd-screen::before { content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: repeating-linear-gradient(to bottom, rgba(0,0,0,0.05) 0px, rgba(0,0,0,0.05) 1px, transparent 1px, transparent 2px), repeating-linear-gradient(to right, rgba(0,0,0,0.02) 0px, rgba(0,0,0,0.02) 1px, transparent 1px, transparent 2px); pointer-events: none; z-index: 200; }
         
+        /* Iframe with credentialless to try and help with COEP */
         iframe, canvas#canvas { width: 100%; height: 100%; border: none; background-color: #000; display: none; image-rendering: pixelated; }
         
         .menu-ui { 
             position: absolute; top: 0; left: 0; width: 100%; height: 100%; 
             background-color: white; 
-            padding: 8px 12px; /* Reduced padding */
+            padding: 8px 12px;
             display: none; 
             flex-direction: column; 
             align-items: center; 
-            justify-content: center; /* Center vertically */
+            justify-content: center;
             z-index: 100; 
             overflow-y: auto; 
         }
         
-        .menu-ui h2 { margin-top: 0; margin-bottom: 6px; font-size: 16px; } /* Compact header */
+        .menu-ui h2 { margin-top: 0; margin-bottom: 6px; font-size: 16px; }
         
         .menu-ui::-webkit-scrollbar { width: 4px; }
         .menu-ui::-webkit-scrollbar-track { background: #f1f1f1; }
@@ -58,13 +59,13 @@
         /* Compact Menu Buttons */
         .menu-btn { 
             width: 90%; 
-            padding: 5px 0; /* Reduced from 6px */
-            margin: 2px 0;  /* Reduced from 3px */
+            padding: 5px 0;
+            margin: 2px 0;
             background-color: #f3f4f6; 
             border: 2px solid #d1d5db; 
-            border-radius: 6px; /* Slightly tighter radius */
+            border-radius: 6px;
             font-weight: bold; 
-            font-size: 12px; /* Slightly smaller font */
+            font-size: 12px;
             color: #374151; 
             text-align: center; 
             cursor: pointer; 
@@ -75,7 +76,7 @@
 
         /* Compact Red Button */
         .btn-red { 
-            margin-top: 8px; /* Reduced from 15px */
+            margin-top: 8px;
             padding: 6px 20px; 
             background-color: #dc2626; 
             color: white; 
@@ -170,7 +171,8 @@
                     <div id="debug-console"></div>
                     <div id="start-screen"><div class="nann-pill"><div class="nann-logo-text">NANN BOY</div></div></div>
                     
-                    <iframe id="game-iframe" src="about:blank" allow="autoplay; fullscreen; gamepad; accelerometer; gyroscope; clipboard-write" sandbox="allow-forms allow-pointer-lock allow-popups allow-same-origin allow-scripts" referrerpolicy="no-referrer"></iframe>
+                    <!-- Added credentialless to help with some COEP cases -->
+                    <iframe id="game-iframe" credentialless src="about:blank" allow="autoplay; fullscreen; gamepad; accelerometer; gyroscope; clipboard-write" sandbox="allow-forms allow-pointer-lock allow-popups allow-same-origin allow-scripts" referrerpolicy="no-referrer"></iframe>
                     
                     <!-- ID 'canvas' as requested, with dimensions -->
                     <canvas id="canvas" width="240" height="160"></canvas>
@@ -546,7 +548,13 @@
         // This function builds the Module object and injects the script
         async function launchMgba(romBuffer, romName) {
             closeAllMenus();
-            stopCurrentGame(); // Strict Cleanup
+            
+            // CLEANUP: Hide HTML Game if active
+            const iframe = document.getElementById('game-iframe');
+            if (gameMode === 'html') {
+                iframe.style.display = 'none';
+                iframe.src = 'about:blank';
+            }
 
             const loadingOverlay = document.getElementById('loading-overlay');
             if(loadingOverlay) {
@@ -567,7 +575,6 @@
                 const canvas = document.getElementById('canvas');
                 canvas.style.display = 'block';
                 document.getElementById('start-screen').style.display = 'none';
-                gameMode = 'rom'; // Update global mode
                 
                 // Write File
                 const ext = romName.split('.').pop();
@@ -659,7 +666,6 @@
                 if (Module.loadGame) {
                      debugLog("Calling loadGame()...");
                      Module.loadGame(safeName);
-                     gameMode = 'rom'; // Update global mode
                      
                      // Turn on LED
                      document.getElementById('power-led').classList.add('on');
@@ -693,6 +699,7 @@
             const isRom = file.name.match(/\.(gb|gbc|gba)$/i); 
 
             if (!isZip && !isRom) { return; }
+            gameMode = 'rom';
             
             const processRom = (buffer, name) => {
                 launchMgba(buffer, name);
@@ -792,9 +799,10 @@
             gameControls.forEach(control => { control.addEventListener('touchstart', handleStart, { passive: false }); control.addEventListener('mousedown', handleStart); control.addEventListener('touchend', handleEnd); control.addEventListener('mouseup', handleEnd); control.addEventListener('mouseleave', handleEnd); });
             
             document.getElementById('btn-close-key-map')?.addEventListener('click', () => openMenu('main-menu'));
-            document.getElementById('file-input-html')?.addEventListener('change', handleHtmlUpload);
-            document.getElementById('file-input-zip-web')?.addEventListener('change', handleWebZipUpload); 
-            document.getElementById('file-input-rom')?.addEventListener('change', handleRomUpload);
+            // Fix: Reset value to allow re-selecting same file
+            document.getElementById('file-input-html')?.addEventListener('change', (e) => { handleHtmlUpload(e); e.target.value = null; });
+            document.getElementById('file-input-zip-web')?.addEventListener('change', (e) => { handleWebZipUpload(e); e.target.value = null; }); 
+            document.getElementById('file-input-rom')?.addEventListener('change', (e) => { handleRomUpload(e); e.target.value = null; });
             
             document.getElementById('btn-cancel-key-select')?.addEventListener('click', hideKeySelection); 
             document.getElementById('close-install')?.addEventListener('click', () => { document.getElementById('install-prompt').style.display = 'none'; });

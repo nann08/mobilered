@@ -358,7 +358,7 @@
             const bindingsList = document.getElementById('bindings-list');
             if (bindingsList) {
                 bindingsList.innerHTML = Object.keys(keyMap).map(label => {
-                    const mappedKey = keyMap[label]; const displayKey = mappedKey ? (mappedKey.key === ' ' ? 'SPACE' : mappedKey.key.toUpperCase()) : 'N/A';
+                    const mappedKey = keyMap[label]; const displayKey = mappedKey ? (mappedKey.key === ' ' ? 'SPACE' : mappedKey.key.toUpperCase()) : 'A';
                     return `<div class="binding-row"><span class="font-semibold">${label}:</span><span class="binding-key binding-target" data-label="${label}" id="binding-key-${label}">${displayKey}</span></div>`;
                 }).join('');
                 bindingsList.querySelectorAll('.binding-target').forEach(span => { span.addEventListener('click', () => startKeyBinding(span.getAttribute('data-label'))); });
@@ -643,10 +643,11 @@
                          }
                      }
                      
-                     // CRITICAL FIX 2: FORCE AUDIO SYNC
-                     // Set Main Loop Timing to Mode 1 (Audio Sync) or 0 (VSync) if drifting
+                     // CRITICAL FIX 2: FORCE AUDIO SYNC (SetTimeout Mode 1, 16ms)
+                     // This disconnects the game loop from the screen refresh rate, preventing stutter/slow motion.
                      if (Module.setMainLoopTiming) {
-                         Module.setMainLoopTiming(0, 1); // Often fixes drift
+                         debugLog("Forcing Audio Sync Mode...");
+                         Module.setMainLoopTiming(1, 16);
                      }
 
                      // Turn on LED

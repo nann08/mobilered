@@ -3,16 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    
-    <!-- COI Service Worker: Essential for WASM performance -->
-    <script src="coi-serviceworker.js"></script>
-
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-title" content="Nann Boy">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="theme-color" content="#7f1d1d">
+    <meta name="theme-color" content="#000000">
     <title>Nann Emulator (mGBA)</title>
     
+    <!-- Service Worker for Headers (SharedArrayBuffer support) -->
+    <script src="coi-serviceworker.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
@@ -41,24 +39,13 @@
             contain: paint; 
         }
         
-        iframe { 
-            width: 100%; 
-            height: 100%; 
-            border: none; 
-            background-color: #000; 
-            display: none;
-            will-change: transform;
-            transform: translateZ(0);
-        }
+        iframe { width: 100%; height: 100%; border: none; background-color: #000; display: none; will-change: transform; transform: translateZ(0); }
         
-        /* CANVAS OPTIMIZATION 
-           image-rendering: pixelated ensures crisp scaling without blurring
-           width/height 100% allows CSS scaling while internal resolution remains 240x160
-        */
+        /* CANVAS STYLES */
         canvas#canvas {
             display: none; 
             width: 100%; height: 100%;
-            image-rendering: pixelated;
+            image-rendering: pixelated; /* Essential for sharp GBA look */
             background-color: #000;
         }
         
@@ -133,10 +120,10 @@
                 <div class="lens-branding"><div class="power-led" id="power-led"></div><div class="text-battery">BATTERY</div></div>
                 <div class="lcd-screen" id="lcd-screen">
                     
-                    <!-- Static Canvas for Safari Compatibility -->
+                    <!-- CANVAS (Initially Hidden) -->
                     <canvas id="canvas" width="240" height="160"></canvas>
 
-                    <!-- CUSTOM BOOT ANIMATION OVERLAY -->
+                    <!-- LOADING OVERLAY -->
                     <div id="loading-overlay" class="absolute inset-0 flex flex-col items-center justify-center z-50" style="background-color: #ffffff; display: none;">
                         <div class="boot-logo">NANN BOY</div>
                         <div class="mt-4">
@@ -217,8 +204,7 @@
         let auth;
         let userId = null;
         let gameMode = 'html'; 
-        let currentRomName = 'unknown_game'; 
-
+        
         let keyMap = {
             'Up': { key: 'ArrowUp' },
             'Down': { key: 'ArrowDown' },
@@ -239,16 +225,16 @@
         let isAuthReady = false;
 
         let audioCtx = null;
-        let mainGainNode = null; // Master volume control
+        let mainGainNode = null; 
 
         function initAudio() {
             if (!audioCtx) {
                 const AudioContext = window.AudioContext || window.webkitAudioContext;
                 if(AudioContext) {
                     audioCtx = new AudioContext({ latencyHint: 'playback' });
-                    // Create Master Gain for muting/fading
+                    // NOISE FIX: Create a Master Gain Node set to 0 initially
                     mainGainNode = audioCtx.createGain();
-                    mainGainNode.gain.value = 0; // START MUTED
+                    mainGainNode.gain.value = 0; 
                     mainGainNode.connect(audioCtx.destination);
                 }
             }
@@ -256,19 +242,19 @@
         }
 
         function playHapticSound() {
-            if (!audioCtx || !mainGainNode) return;
-            // Only play haptics if we are not totally muted, or route haptics separately
-            // For now, we only play haptics to destination if volume is up, OR we create separate path
-            // Let's create a separate path for haptics so they work even if game is muted on load
+            if (!audioCtx) return; // Haptics can use direct destination if needed or check context
+            // For simple haptics, we can create a separate path if main game is muted
+            // but for now let's just respect the context state
             const t = audioCtx.currentTime;
             
-            const hapticGain = audioCtx.createGain();
-            hapticGain.connect(audioCtx.destination); // Bypass mainGainNode for UI sounds
+            // Bypass the mainGainNode for UI sounds so they work even if game audio is fading in
+            const uiGain = audioCtx.createGain();
+            uiGain.connect(audioCtx.destination);
             
             const filter = audioCtx.createBiquadFilter();
             filter.type = "lowpass";
             filter.frequency.value = 3500;
-            filter.connect(hapticGain);
+            filter.connect(uiGain);
 
             const clickOsc = audioCtx.createOscillator();
             clickOsc.connect(filter);
@@ -276,18 +262,19 @@
             clickOsc.frequency.setValueAtTime(1500, t);
             clickOsc.frequency.exponentialRampToValueAtTime(1000, t + 0.01);
             
-            hapticGain.gain.setValueAtTime(0.08, t);
-            hapticGain.gain.exponentialRampToValueAtTime(0.001, t + 0.02);
+            uiGain.gain.setValueAtTime(0.08, t);
+            uiGain.gain.exponentialRampToValueAtTime(0.001, t + 0.02);
             
             clickOsc.start(t);
             clickOsc.stop(t + 0.02);
         }
 
         // --- SAFE AUDIO FADE IN ---
+        // Call this only when the game loop is definitely running
         function fadeInGameAudio() {
             if(audioCtx && mainGainNode) {
                 const t = audioCtx.currentTime;
-                // Ramp up from 0 to 1 over 1.5 seconds
+                // Ramp up from 0 to 1 over 1.0 second
                 mainGainNode.gain.setTargetAtTime(1.0, t, 0.5);
             }
         }
@@ -538,7 +525,6 @@
                 }, 2000);
                 
                 if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
-                if (window.Module.SDL2?.audioContext?.state === 'suspended') window.Module.SDL2.audioContext.resume();
                 
                 return;
             }
@@ -571,8 +557,7 @@
 
             const config = {
                 canvas: canvas,
-                // Force Frameskip 1 for performance on mobile
-                arguments: ['--frameskip', '1'],
+                arguments: ['--frameskip', '1'], // Frameskip 1 is vital for mobile smoothness
                 locateFile: function(path, prefix) {
                     if (path.endsWith('.wasm')) {
                         return 'mgba.wasm';
@@ -606,31 +591,30 @@
                     FS.writeFile(safeName, new Uint8Array(romBuffer));
                 }
 
-                if (Module.loadGame) {
+                // CRITICAL FIX: Use callMain if available to ensure loop starts
+                if (Module.callMain) {
+                    // Try standard callMain boot
+                    Module.callMain([safeName, '--frameskip', '1']);
+                } else if (Module.loadGame) {
                      Module.loadGame(safeName);
-                     gameMode = 'rom';
-
-                     if (Module.toggleRewind) {
-                         try {
-                            Module.toggleRewind(false);
-                         } catch(e) { }
-                     }
-
-                     document.getElementById('power-led').classList.add('on');
-                     document.getElementById('btn-menu-exit-game').style.display = 'block'; 
-                     
-                     // HIDE OVERLAY & FADE IN AUDIO
-                     setTimeout(() => {
-                        if(loadingOverlay) loadingOverlay.style.display = 'none';
-                        fadeInGameAudio(); // Safe un-mute
-                     }, 2000);
-                     
-                     if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
-                     const audioContext = Module.SDL2?.audioContext || Module.audioContext;
-                     if (audioContext && audioContext.state === 'suspended') {
-                         audioContext.resume();
-                     }
                 }
+                
+                gameMode = 'rom';
+
+                if (Module.toggleRewind) {
+                     try { Module.toggleRewind(false); } catch(e) { }
+                }
+
+                document.getElementById('power-led').classList.add('on');
+                document.getElementById('btn-menu-exit-game').style.display = 'block'; 
+                 
+                // HIDE OVERLAY & FADE IN AUDIO
+                setTimeout(() => {
+                    if(loadingOverlay) loadingOverlay.style.display = 'none';
+                    fadeInGameAudio(); // Safe un-mute
+                }, 2000);
+                 
+                if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
 
             } catch (e) {
                 if(loadingOverlay) loadingOverlay.innerHTML = `Error: ${e.message}`;

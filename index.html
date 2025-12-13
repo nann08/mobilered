@@ -15,20 +15,11 @@
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 
-    <script>
-        (function() {
-            const ICON_BASE64 = 'iVBORw0KGgoAAAANSUhEUgAAAMAAAADACAYAAAEg+pWNAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAAyJpVFh0WE1MOmNvbS5hZG9iZS54bXAAAAAAADw/eHBhY2tldCBiZWdpbj0i77u/IiBpZD0iVzVNME1wQ2VoaUh6cmVTek5UY3prYzlkIj8+/Pvo88/gAAAJZSURBVHja7Nw9SstQGIBh8/tD0U1wFO7A3biZtXQPt7C2sLNxB07O4A4cFDqYQJtCUgT1POF7A4EkJ/zk5GFvR0dHR2fW6/V6fXl92Ww2X5fL5buPj4/vbrfb5+Fw+DydTp+m0+nz9XrtE4n7/f4z/X6/X6/X6/vj8fg1xvi62WxeZ7PZ12w2+57NZl+32+334XD4MpvNvnq93rd6vX6YTCbfp9Pp13a7/ZzP51/r9fqx1+t9rdfrh+l0+j2fzz9ns9nPfD7/ms/nP4fD4dtsNvtardbP4/H4Yz6ff0+n08/ZbPaz2Wx+1uv1w2Qy+ZpOp5+z2exns9n8rNfrh8lk8jWdTj9ns9nPZrP5Wa/XD5PJ5Gs6nX7OZrOfzWbzs16vHyaTydf/6fR7Pp9/zGazn/l8/jWfz38Oh8O32Wz2tVqtH4B/wAAAAAABAAAAAQAAAAEAAAAAAQAAAAEAAAAAAQAAAAEAAAAAAQAAAAEAAAAAAQAAAAEAAAAAAQAAAAEAAAAAAQAAAAEAAAAAAQAAAAEAAAAAAQAAAAEAAAAAAQAAAAEAAAAAAQAAAAEAAAAAAQAAAAEAAAAAAQAAAAEAAAAAAQAAAAEAAAAAAQAAAAEAAAAAAQAAAAEAAAAAAQAAAAEAAAAAAQAAAAEAAAAAAQAAAAEAAAAAAQAAAAEAAAAAAQAAAAEAAAAAAQAAAAEAAAAAAQAAAAEAAAAAAQAAAAEAAAAAAQAAAAEAAAAAAQAAAAEAAAAAAQAAAAEAAAAAAQAAAAEAAAAAAQAAAAEAAAAAAQAAAAEAAAAAAQAAwD8CDAAh9QZ882j32AAAAABJRU5ErkJggg==';
-            const linkIcon = document.createElement('link'); linkIcon.rel = 'apple-touch-icon'; linkIcon.href = `data:image/png;base64,${ICON_BASE64}`; document.head.appendChild(linkIcon);
-            const linkFav32 = document.createElement('link'); linkFav32.rel = 'icon'; linkFav32.type = 'image/png'; linkFav32.sizes = '32x32'; linkFav32.href = `data:image/png;base64,${ICON_BASE64}`; document.head.appendChild(linkFav32);
-            if (!(/iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream)) {
-                const manifest = { "name": "Nann Boy", "short_name": "NannBoy", "start_url": ".", "display": "standalone", "background_color": "#7f1d1d", "theme_color": "#7f1d1d", "orientation": "portrait", "icons": [{ "src": `data:image/png;base64,${ICON_BASE64}`, "sizes": "192x192", "type": "image/png" }] };
-                const linkManifest = document.createElement('link'); linkManifest.rel = 'manifest'; linkManifest.href = `data:application/json;base64,${btoa(JSON.stringify(manifest))}`; document.head.appendChild(linkManifest);
-            }
-        })();
-    </script>
+    <!-- Tailwind -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
     <style>
+        /* ... existing styles ... */
         *, *::before, *::after { box-sizing: border-box; -webkit-tap-highlight-color: transparent; -webkit-touch-callout: none; user-select: none; }
         :root { --screen-color: #ffffff; --screen-shadow: #0f380f; --safe-top: env(safe-area-inset-top, 20px); --safe-bottom: env(safe-area-inset-bottom, 20px); --console-main: #E83942; --console-dark: #b91c1c; --bg-color: #7f1d1d; --btn-color: #1c1c1c; --dpad-color: #1c1c1c; --text-battery: #a1a1aa; }
         html, body { width: 100%; height: 100%; margin: 0; padding: 0; overscroll-behavior: none; position: fixed; overflow: hidden; background-color: var(--bg-color); transition: background-color 0.3s ease; font-family: 'Inter', sans-serif; display: flex; align-items: flex-start; justify-content: center; }
@@ -57,7 +48,6 @@
         }
         
         .menu-ui h2 { margin-top: 0; margin-bottom: 8px; }
-        
         .menu-ui::-webkit-scrollbar { width: 4px; }
         .menu-ui::-webkit-scrollbar-track { background: #f1f1f1; }
         .menu-ui::-webkit-scrollbar-thumb { background: #ccc; border-radius: 2px; }
@@ -66,78 +56,18 @@
         .nann-pill { border: 3px solid #000000; border-radius: 50px; padding: 4px 24px; display: inline-block; margin-bottom: 20px; background: transparent; }
         .nann-logo-text { font-family: 'Inter', sans-serif; font-weight: 900; font-size: 28px; color: #000000; letter-spacing: 1px; line-height: 1; }
         
-        /* Standard Gray Buttons */
-        .menu-btn { 
-            width: 90%; 
-            padding: 6px 0; 
-            margin: 3px 0;  
-            background-color: #f3f4f6; 
-            border: 2px solid #d1d5db; 
-            border-radius: 8px; 
-            font-weight: bold; 
-            font-size: 13px; 
-            color: #374151; 
-            text-align: center; 
-            cursor: pointer; 
-            transition: all 0.2s; 
-            flex-shrink: 0; 
-        }
+        .menu-btn { width: 90%; padding: 6px 0; margin: 3px 0; background-color: #f3f4f6; border: 2px solid #d1d5db; border-radius: 8px; font-weight: bold; font-size: 13px; color: #374151; text-align: center; cursor: pointer; transition: all 0.2s; flex-shrink: 0; }
         .menu-btn:active { background-color: #e5e7eb; transform: scale(0.98); }
-
-        /* Manual Red Button Style (Fixes Missing Red) */
-        .btn-red {
-            margin-top: 15px; 
-            padding: 8px 24px; 
-            background-color: #dc2626; 
-            color: white; 
-            border-radius: 8px; 
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1); 
-            font-size: 14px; 
-            font-weight: bold;
-            border: none;
-            cursor: pointer;
-            transition: background-color 0.2s;
-        }
+        .btn-red { margin-top: 15px; padding: 8px 24px; background-color: #dc2626; color: white; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); font-size: 14px; font-weight: bold; border: none; cursor: pointer; transition: background-color 0.2s; }
         .btn-red:hover { background-color: #b91c1c; }
-        
-        /* Manual Gray/Back Button Style */
-        .btn-back {
-            margin-top: 15px; 
-            padding: 8px 24px; 
-            background-color: #4b5563; 
-            color: white; 
-            border-radius: 8px; 
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1); 
-            font-size: 14px; 
-            font-weight: bold;
-            border: none;
-            cursor: pointer;
-            transition: background-color 0.2s;
-        }
+        .btn-back { margin-top: 15px; padding: 8px 24px; background-color: #4b5563; color: white; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); font-size: 14px; font-weight: bold; border: none; cursor: pointer; transition: background-color 0.2s; }
         .btn-back:hover { background-color: #374151; }
-
-        /* Manual Battery Text Style (Fixes Black Text) */
-        .text-battery {
-            font-size: 10px;
-            color: var(--text-battery);
-            font-weight: bold;
-            letter-spacing: 0.05em;
-        }
-
+        .text-battery { font-size: 10px; color: var(--text-battery); font-weight: bold; letter-spacing: 0.05em; }
         .theme-option { display: flex; align-items: center; width: 100%; padding: 8px; margin: 4px 0; border: 1px solid #eee; border-radius: 8px; cursor: pointer; flex-shrink: 0; }
         .theme-preview { width: 24px; height: 24px; border-radius: 50%; margin-right: 15px; border: 2px solid rgba(0,0,0,0.1); }
         #file-input-html, #file-input-rom, #file-input-zip-web { display: none; } 
-        
-        .upload-label { 
-            display: flex; align-items: center; justify-content: center; width: 100%; 
-            padding: 8px; 
-            background-color: #dc2626; color: white; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 13px; margin-bottom: 6px; 
-            transition: background-color 0.2s; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); flex-shrink: 0;
-        }
-        .upload-label.rom-label { background-color: #2563eb; }
-        .upload-label.folder-label { background-color: #16a34a; }
-        .upload-label:hover { opacity: 0.9; }
-        
+        .upload-label { display: flex; align-items: center; justify-content: center; width: 100%; padding: 8px; background-color: #dc2626; color: white; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 13px; margin-bottom: 6px; transition: background-color 0.2s; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); flex-shrink: 0; }
+        .upload-label.rom-label { background-color: #2563eb; } .upload-label.folder-label { background-color: #16a34a; } .upload-label:hover { opacity: 0.9; }
         .nann-brand { font-family: 'Inter', sans-serif; font-style: italic; font-weight: 900; color: rgba(0,0,0,0.6); font-size: 28px; letter-spacing: 1px; margin-top: 20px; margin-bottom: 10px; text-shadow: 1px 1px 0px rgba(255, 255, 255, 0.2), -1px -1px 0px rgba(0, 0, 0, 0.2); }
         .controls-area { width: 100%; flex-grow: 1; position: relative; transform: translate3d(0,0,0); }
         .speaker-grille { position: absolute; bottom: 40px; right: 25px; display: flex; gap: 8px; transform: rotate(-25deg); z-index: 10; }
@@ -147,8 +77,7 @@
         .dpad-arm { background-color: var(--dpad-color); position: absolute; border-radius: 6px; box-shadow: 2px 4px 6px rgba(0,0,0,0.4); transition: transform 0.05s; }
         .dpad-arm::before { content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 100%; border-radius: 6px; box-shadow: inset 2px 2px 4px rgba(255,255,255,0.2), inset -2px -2px 4px rgba(0,0,0,0.8); pointer-events: none; }
         .dpad-arm.pressed-arm { transform: translateY(2px) !important; box-shadow: 0 1px 2px rgba(0,0,0,0.4); }
-        .dpad-h { width: 130px; height: 40px; top: 45px; left: 0; }
-        .dpad-v { width: 40px; height: 130px; left: 45px; top: 0; }
+        .dpad-h { width: 130px; height: 40px; top: 45px; left: 0; } .dpad-v { width: 40px; height: 130px; left: 45px; top: 0; }
         .dpad-center { position: absolute; width: 40px; height: 40px; background-color: var(--dpad-color); top: 45px; left: 45px; z-index: 15; border-radius: 4px; background: radial-gradient(circle at center, var(--dpad-color) 60%, var(--dpad-color) 100%); }
         .dpad-center::after { content: ''; position: absolute; top: 6px; left: 6px; width: 28px; height: 28px; border-radius: 50%; background: radial-gradient(circle, rgba(0,0,0,0.2) 0%, var(--dpad-color) 70%); box-shadow: inset 1px 1px 2px rgba(0,0,0,0.8), 1px 1px 0 rgba(255,255,255,0.1); }
         .dpad-btn { position: absolute; width: 55px; height: 55px; z-index: 20; cursor: pointer; }
@@ -200,7 +129,7 @@
                     
                     <iframe id="game-iframe" src="about:blank" allow="autoplay; fullscreen; gamepad; accelerometer; gyroscope; clipboard-write" sandbox="allow-forms allow-pointer-lock allow-popups allow-same-origin allow-scripts" referrerpolicy="no-referrer"></iframe>
                     
-                    <!-- ID restored to 'canvas' -->
+                    <!-- ID 'canvas' with dimensions -->
                     <canvas id="canvas" width="240" height="160"></canvas>
                     
                     <div id="main-menu" class="menu-ui">
@@ -548,9 +477,7 @@
             const config = {
                 canvas: canvas,
                 arguments: [safeName], // AUTO-RUN: Pass the game file name here
-                // Note: 'noInitialRun' behavior depends on specific build; 
-                // typically we let it run but we need to wait for FSInit first.
-                // In @thenick775 build, we usually init the module, THEN init FS, THEN run.
+                noInitialRun: true, // IMPORTANT: Wait for FSInit
                 
                 locateFile: function(path, prefix) {
                     if (path.endsWith('.wasm')) {
@@ -593,11 +520,6 @@
                 debugLog("ROM Written.");
 
                 // 4. Start Game
-                // If the build supports gameStart(), use it. Otherwise rely on callMain or auto-run.
-                // Most modern builds expose specific methods or run automatically if arguments are present.
-                // However, since we awaited the factory, main() might have already run (or tried to).
-                // Let's explicitly try to start it if it hasn't.
-                
                 clearTimeout(timeoutId);
                 document.getElementById('power-led').classList.add('on');
                 if(loadingOverlay) loadingOverlay.style.display = 'none';
@@ -609,8 +531,22 @@
                 } else if (Module.callMain) {
                      debugLog("Calling callMain()...");
                      Module.callMain([safeName]);
+                } else if (Module.run) {
+                     debugLog("Calling run()...");
+                     Module.run(); // Should pick up arguments from config
+                } else if (Module._main) { // Fallback for some Emscripten builds
+                     debugLog("Calling _main directly...");
+                     // Manually calling _main usually requires argc, argv. 
+                     // But if INVOKE_RUN=0, we might need to rely on run() or callMain() which wraps main.
+                     // However, passing 0,0 often "just works" if the args were set in preRun/config.
+                     try {
+                        Module._main(0, 0);
+                     } catch(e) { debugLog("_main crash: " + e, 'error'); }
                 } else {
-                     debugLog("No explicit start method found. Hoping for auto-start...");
+                     debugLog("No explicit start method found. Inspecting Module keys...");
+                     // DEBUG: Print all keys to help identify the start method
+                     const keys = Object.keys(Module).filter(k => typeof Module[k] === 'function').slice(0, 20);
+                     debugLog("Functions found: " + keys.join(", "));
                 }
 
             } catch (e) {

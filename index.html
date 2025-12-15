@@ -52,6 +52,31 @@
         .menu-ui { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-color: white; padding: 8px 12px; display: none; flex-direction: column; align-items: center; justify-content: center; z-index: 100; overflow-y: auto; }
         .menu-ui h2 { margin-top: 0; margin-bottom: 6px; font-size: 16px; }
         
+        /* PINNED CANCEL BUTTON STYLES */
+        #key-selection-modal {
+            overflow: hidden; /* Prevent the container from scrolling */
+            justify-content: flex-start; /* Start layout from top */
+            padding-top: 20px;
+            padding-bottom: 20px;
+        }
+        #key-selection-modal h2 {
+            flex-shrink: 0; /* Keep header visible */
+        }
+        #virtual-keypad {
+            flex-grow: 1; /* Take up all available middle space */
+            overflow-y: auto; /* Scroll only this section */
+            width: 100%;
+            max-height: none !important; /* Override inline styles */
+            margin-bottom: 10px;
+            display: grid;
+            align-content: start;
+            justify-content: center;
+        }
+        #btn-cancel-key-select {
+            flex-shrink: 0; /* Keep button visible (glued) */
+            margin-top: 0;
+        }
+
         #start-screen { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 20; text-align: center; color: #000000; background-color: #ffffff; }
         .nann-pill { border: 3px solid #000000; border-radius: 50px; padding: 4px 24px; display: inline-block; margin-bottom: 20px; background: transparent; }
         .nann-logo-text { font-family: 'Inter', sans-serif; font-weight: 900; font-size: 28px; color: #000000; letter-spacing: 1px; line-height: 1; }
@@ -65,7 +90,7 @@
         .text-battery { font-size: 10px; color: var(--text-battery); font-weight: bold; letter-spacing: 0.05em; }
         .theme-option { display: flex; align-items: center; width: 100%; padding: 6px; margin: 2px 0; border: 1px solid #eee; border-radius: 6px; cursor: pointer; flex-shrink: 0; font-size: 12px; }
         .theme-preview { width: 20px; height: 20px; border-radius: 50%; margin-right: 10px; border: 2px solid rgba(0,0,0,0.1); }
-        #file-input-html, #file-input-rom, #file-input-zip-web, #file-input-sav { display: none; } 
+        #file-input-html, #file-input-rom, #file-input-zip-web { display: none; } 
         
         .nann-brand { font-family: 'Inter', sans-serif; font-style: italic; font-weight: 900; color: rgba(0,0,0,0.6); font-size: 28px; letter-spacing: 1px; margin-top: 20px; margin-bottom: 10px; text-shadow: 1px 1px 0px rgba(255, 255, 255, 0.2), -1px -1px 0px rgba(0, 0, 0, 0.2); }
         .controls-area { width: 100%; flex-grow: 1; position: relative; transform: translate3d(0,0,0); }
@@ -154,12 +179,6 @@
                         <div class="menu-btn" id="btn-load-rom-action">ROM FILE</div>
                         <div class="menu-btn" id="btn-load-html-file">HTML FILE</div>
                         <div class="menu-btn" id="btn-load-zip-web">WEB ZIP</div>
-                        
-                        <div class="w-full border-t border-gray-200 my-2"></div>
-                        <h3 class="text-xs font-bold text-gray-400 mb-1">DATA MANAGEMENT</h3>
-                        <div class="menu-btn" id="btn-export-save">EXPORT SAVE (.sav)</div>
-                        <div class="menu-btn" id="btn-import-save">IMPORT SAVE (.sav)</div>
-                        
                         <button id="btn-back-load-menu" class="btn-back">Back</button>
                     </div>
                     
@@ -530,70 +549,6 @@
             }
         }
 
-        function exportSave() {
-            if(!currentRomName) return;
-            try {
-                // 1. Try Memory FS first
-                let saveBytes = null;
-                if(window.Module && window.Module.FS) {
-                    try {
-                         saveBytes = window.Module.FS.readFile('game.sav');
-                    } catch(e){}
-                }
-                
-                // 2. Fallback to LocalStorage
-                if(!saveBytes) {
-                    const b64 = localStorage.getItem(getSaveKey(currentRomName));
-                    if(b64) {
-                        const binary = atob(b64);
-                        saveBytes = new Uint8Array(binary.length);
-                        for(let i=0; i<binary.length; i++) saveBytes[i] = binary.charCodeAt(i);
-                    }
-                }
-
-                if(saveBytes) {
-                    const blob = new Blob([saveBytes], {type: "application/octet-stream"});
-                    const url = URL.createObjectURL(blob);
-                    const a = document.createElement('a');
-                    a.href = url;
-                    // Use original name if possible, replace ext with .sav
-                    const saveName = currentRomName.replace(/\.(gb|gbc|gba|zip)$/i, '') + '.sav';
-                    a.download = saveName;
-                    a.click();
-                    URL.revokeObjectURL(url);
-                } else {
-                    alert("No save data found to export.");
-                }
-            } catch(e) {
-                console.error(e);
-                alert("Export failed.");
-            }
-        }
-
-        function importSave(event) {
-            const file = event.target.files[0];
-            if(!file || !currentRomName) return;
-            
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                const buffer = e.target.result;
-                const bytes = new Uint8Array(buffer);
-                
-                // Write to FS
-                if(window.Module && window.Module.FS) {
-                    window.Module.FS.writeFile('game.sav', bytes);
-                }
-                
-                // Write to LocalStorage (Persist)
-                const binary = String.fromCharCode.apply(null, bytes);
-                localStorage.setItem(getSaveKey(currentRomName), btoa(binary));
-                
-                alert("Save imported! Please Restart the game via menu (Exit Game -> Load ROM) to take effect.");
-                closeAllMenus();
-            };
-            reader.readAsArrayBuffer(file);
-        }
-
         document.getElementById('btn-menu-load-game').addEventListener('click', () => { openMenu('load-game-menu'); });
         document.getElementById('btn-back-load-menu').addEventListener('click', () => { openMenu('main-menu'); });
         document.getElementById('btn-menu-exit-game').addEventListener('click', exitGame);
@@ -604,10 +559,6 @@
         document.getElementById('btn-menu-style').addEventListener('click', () => { openMenu('styles-menu'); });
         document.getElementById('btn-close-main-menu').addEventListener('click', () => { closeAllMenus(); });
         
-        document.getElementById('btn-export-save').addEventListener('click', exportSave);
-        document.getElementById('btn-import-save').addEventListener('click', () => { document.getElementById('file-input-sav').click(); });
-        document.getElementById('file-input-sav').addEventListener('change', (e) => { importSave(e); e.target.value = null; });
-
         function setupMenuSounds() {
             const clickables = document.querySelectorAll('.menu-btn, .btn-red, .btn-back, .btn-blue, .upload-label, button');
             clickables.forEach(btn => {

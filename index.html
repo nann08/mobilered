@@ -45,7 +45,7 @@
         canvas#canvas {
             display: none; 
             width: 100%; height: 100%;
-            image-rendering: pixelated; 
+            image-rendering: pixelated; /* Essential for sharp GBA look */
             background-color: #000;
         }
         
@@ -94,12 +94,13 @@
         .menu-btn { width: 90%; padding: 5px 0; margin: 2px 0; background-color: #f3f4f6; border: 2px solid #d1d5db; border-radius: 6px; font-weight: bold; font-size: 12px; color: #374151; text-align: center; cursor: pointer; transition: all 0.2s; flex-shrink: 0; }
         .menu-btn:active { background-color: #e5e7eb; transform: scale(0.98); }
         .btn-red { margin-top: 8px; padding: 6px 20px; background-color: #dc2626; color: white; border-radius: 6px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); font-size: 12px; font-weight: bold; border: none; cursor: pointer; }
+        .btn-blue { margin-top: 4px; padding: 6px 20px; background-color: #2563eb; color: white; border-radius: 6px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); font-size: 12px; font-weight: bold; border: none; cursor: pointer; }
         .btn-back { margin-top: 8px; padding: 6px 20px; background-color: #4b5563; color: white; border-radius: 6px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); font-size: 12px; font-weight: bold; border: none; cursor: pointer; }
 
         .text-battery { font-size: 10px; color: var(--text-battery); font-weight: bold; letter-spacing: 0.05em; }
         .theme-option { display: flex; align-items: center; width: 100%; padding: 6px; margin: 2px 0; border: 1px solid #eee; border-radius: 6px; cursor: pointer; flex-shrink: 0; font-size: 12px; }
         .theme-preview { width: 20px; height: 20px; border-radius: 50%; margin-right: 10px; border: 2px solid rgba(0,0,0,0.1); }
-        #file-input-html, #file-input-rom, #file-input-zip-web { display: none; } 
+        #file-input-html, #file-input-rom, #file-input-zip-web, #file-input-sav { display: none; } 
         
         .nann-brand { font-family: 'Inter', sans-serif; font-style: italic; font-weight: 900; color: rgba(0,0,0,0.6); font-size: 28px; letter-spacing: 1px; margin-top: 20px; margin-bottom: 10px; text-shadow: 1px 1px 0px rgba(255, 255, 255, 0.2), -1px -1px 0px rgba(0, 0, 0, 0.2); }
         .controls-area { width: 100%; flex-grow: 1; position: relative; transform: translate3d(0,0,0); }
@@ -630,7 +631,11 @@
                 debugLog("Swapping Cartridge...");
                 window.Module.loadGame(safeName);
                 
-                // CRITICAL: NO MANUAL RESET. Let loadGame handle startup.
+                // 4. Force Reset (Hard Boot) to ensure game reads the restored .sav
+                // CRITICAL: Only reset on reload, not first load!
+                if (window.Module.resetGame) {
+                    window.Module.resetGame();
+                }
 
                 gameMode = 'rom';
                 
@@ -680,9 +685,17 @@
             document.getElementById('start-screen').style.display = 'none';
             document.getElementById('game-iframe').style.display = 'none';
 
-            // CONFIG strictly as per user reference
+            // CONFIG strictly as per user reference (and previous working state)
             const config = {
-                canvas: canvas
+                canvas: canvas,
+                noInitialRun: true,
+                arguments: ['--frameskip', '1'],
+                locateFile: function(path, prefix) {
+                    if (path.endsWith('.wasm')) {
+                        return 'mgba.wasm';
+                    }
+                    return prefix + path;
+                }
             };
             
             try {
@@ -721,15 +734,12 @@
                 Module.FS.writeFile(safeName, new Uint8Array(romBuffer));
                 
                 // 3. START GAME
-                // STRICTLY use loadGame as per contract
-                if (Module.loadGame) {
+                // Fallback to callMain logic because it's what starts the loop in most setups if not using specialized loadGame
+                if (Module.callMain) {
+                     Module.callMain([safeName]);
+                } else if (Module.loadGame) {
                      Module.loadGame(safeName);
-                } else {
-                     // Fallback only if contract fails (should not happen with correct build)
-                     console.error("Critical: loadGame not found in Module contract.");
                 }
-                
-                // NO MANUAL RESET/RESUME. Trust loadGame().
                 
                 gameMode = 'rom';
 

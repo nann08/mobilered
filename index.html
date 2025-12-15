@@ -726,14 +726,19 @@
                 Module.FS.writeFile(safeName, new Uint8Array(romBuffer));
                 
                 // 3. START GAME
-                // Use callMain if available as it guarantees the loop starts
-                if (Module.callMain) {
-                     Module.callMain([safeName]);
-                } else if (Module.loadGame) {
+                // STRICTLY use loadGame as per contract
+                if (Module.loadGame) {
                      Module.loadGame(safeName);
+                } else {
+                     // Fallback only if contract fails (should not happen with correct build)
+                     console.error("Critical: loadGame not found in Module contract.");
                 }
                 
                 // REMOVED: resetGame() on first load. This was causing the black screen.
+                // ADDED: Resume game explicitly just in case
+                if(Module.resumeGame) {
+                    setTimeout(() => Module.resumeGame(), 100);
+                }
                 
                 gameMode = 'rom';
 

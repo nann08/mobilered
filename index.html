@@ -552,12 +552,22 @@
             document.getElementById('start-screen').style.display = 'none';
             document.getElementById('game-iframe').style.display = 'none';
 
-            // CONFIG strictly as per user reference
-            // No arguments, no noInitialRun. Just canvas.
+            // CONFIG must contain the canvas immediately
             const config = {
-                canvas: canvas
+                canvas: canvas,
+                noInitialRun: true,
+                arguments: ['--frameskip', '1'],
+                locateFile: function(path, prefix) {
+                    if (path.endsWith('.wasm')) {
+                        return 'mgba.wasm';
+                    }
+                    return prefix + path;
+                }
             };
             
+            // DON'T assign global window.Module = config here.
+            // Let the factory handle it cleanly.
+
             try {
                 const mGBA = await import('./mgba.js');
                 const moduleFactory = mGBA.default || mGBA; 
@@ -579,13 +589,12 @@
                 // 4. WRITE FILE
                 Module.FS.writeFile(safeName, new Uint8Array(romBuffer));
                 
-                // 5. BOOT GAME using loadGame (standard for this build pattern)
-                if (Module.loadGame) {
+                // 5. BOOT GAME
+                // Prefer callMain for first boot if available
+                if (Module.callMain) {
+                    Module.callMain([safeName]);
+                } else if (Module.loadGame) {
                      Module.loadGame(safeName);
-                } else {
-                     // Fallback only if absolutely necessary
-                     console.warn("Module.loadGame not found, attempting callMain fallback");
-                     if(Module.callMain) Module.callMain([safeName]);
                 }
                 
                 gameMode = 'rom';

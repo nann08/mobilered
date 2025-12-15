@@ -52,29 +52,46 @@
         .menu-ui { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-color: white; padding: 8px 12px; display: none; flex-direction: column; align-items: center; justify-content: center; z-index: 100; overflow-y: auto; }
         .menu-ui h2 { margin-top: 0; margin-bottom: 6px; font-size: 16px; }
         
-        /* PINNED CANCEL BUTTON STYLES */
+        /* PINNED CANCEL BUTTON STYLES - FIXED */
         #key-selection-modal {
-            overflow: hidden; /* Prevent the container from scrolling */
-            justify-content: flex-start; /* Start layout from top */
-            padding-top: 20px;
-            padding-bottom: 20px;
+            overflow: hidden;
+            justify-content: flex-start;
+            padding: 20px;
+            display: none; /* Initially hidden */
+            flex-direction: column;
         }
         #key-selection-modal h2 {
-            flex-shrink: 0; /* Keep header visible */
+            flex-shrink: 0;
+            margin-bottom: 15px;
         }
         #virtual-keypad {
-            flex-grow: 1; /* Take up all available middle space */
-            overflow-y: auto; /* Scroll only this section */
+            flex-grow: 1;
+            overflow-y: auto;
             width: 100%;
-            max-height: none !important; /* Override inline styles */
-            margin-bottom: 10px;
+            max-height: none !important;
+            margin-bottom: 15px;
             display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 8px;
             align-content: start;
-            justify-content: center;
+            padding-bottom: 10px;
         }
+        .virtual-key-btn {
+            background: #f3f4f6;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            padding: 10px 0;
+            text-align: center;
+            font-weight: bold;
+            font-size: 14px;
+            cursor: pointer;
+            color: #374151;
+        }
+        .virtual-key-btn:active { background: #e5e7eb; }
         #btn-cancel-key-select {
-            flex-shrink: 0; /* Keep button visible (glued) */
-            margin-top: 0;
+            flex-shrink: 0;
+            width: 100%;
+            margin-top: auto; /* Push to bottom if needed, though flex-grow handles spacing */
         }
 
         #start-screen { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 20; text-align: center; color: #000000; background-color: #ffffff; }
@@ -90,7 +107,7 @@
         .text-battery { font-size: 10px; color: var(--text-battery); font-weight: bold; letter-spacing: 0.05em; }
         .theme-option { display: flex; align-items: center; width: 100%; padding: 6px; margin: 2px 0; border: 1px solid #eee; border-radius: 6px; cursor: pointer; flex-shrink: 0; font-size: 12px; }
         .theme-preview { width: 20px; height: 20px; border-radius: 50%; margin-right: 10px; border: 2px solid rgba(0,0,0,0.1); }
-        #file-input-html, #file-input-rom, #file-input-zip-web { display: none; } 
+        #file-input-html, #file-input-rom, #file-input-zip-web, #file-input-sav { display: none; } 
         
         .nann-brand { font-family: 'Inter', sans-serif; font-style: italic; font-weight: 900; color: rgba(0,0,0,0.6); font-size: 28px; letter-spacing: 1px; margin-top: 20px; margin-bottom: 10px; text-shadow: 1px 1px 0px rgba(255, 255, 255, 0.2), -1px -1px 0px rgba(0, 0, 0, 0.2); }
         .controls-area { width: 100%; flex-grow: 1; position: relative; transform: translate3d(0,0,0); }
@@ -200,7 +217,7 @@
                         <div class="theme-option" data-theme="black"><div class="theme-preview" style="background: linear-gradient(145deg, #27272a, #000000);"></div><span class="font-bold text-gray-700">Midnight Black</span></div>
                     </div><button id="btn-back-styles" class="btn-back">Back</button></div>
                     <div id="key-binding-menu" class="menu-ui"><h2 class="text-xl font-bold mb-4 text-gray-800">Controls</h2><div id="bindings-list" class="max-h-40 overflow-y-auto w-full flex flex-col items-center"></div><button id="btn-close-key-map" class="btn-red">Close</button></div>
-                    <div id="key-selection-modal" class="menu-ui" style="display: none; z-index: 300;"><h2 class="text-xl font-bold mb-4 text-gray-800">Map <span id="binding-label-display" class="text-red-600"></span></h2><div id="virtual-keypad" class="grid grid-cols-5 gap-2 p-2 max-w-sm overflow-y-auto" style="max-height: 70%;"></div><button id="btn-cancel-key-select" class="btn-red">Cancel</button></div>
+                    <div id="key-selection-modal" class="menu-ui" style="display: none; z-index: 300;"><h2 class="text-xl font-bold mb-4 text-gray-800">Map <span id="binding-label-display" class="text-red-600"></span></h2><div id="virtual-keypad"></div><button id="btn-cancel-key-select" class="btn-red">Cancel</button></div>
                     
                     <div id="toast-notification">GAME SAVED</div>
                 </div>
@@ -559,6 +576,8 @@
         document.getElementById('btn-menu-style').addEventListener('click', () => { openMenu('styles-menu'); });
         document.getElementById('btn-close-main-menu').addEventListener('click', () => { closeAllMenus(); });
         
+        document.getElementById('btn-cancel-key-select')?.addEventListener('click', hideKeySelection);
+
         function setupMenuSounds() {
             const clickables = document.querySelectorAll('.menu-btn, .btn-red, .btn-back, .btn-blue, .upload-label, button');
             clickables.forEach(btn => {
@@ -620,6 +639,7 @@
                 window.Module.loadGame(safeName);
                 
                 // 4. Force Reset (Hard Boot) to ensure game reads the restored .sav
+                // CRITICAL: Only reset on reload, not first load!
                 if (window.Module.resetGame) {
                     window.Module.resetGame();
                 }
@@ -705,17 +725,15 @@
                 
                 Module.FS.writeFile(safeName, new Uint8Array(romBuffer));
                 
-                if (Module.loadGame) {
+                // 3. START GAME
+                // Use callMain if available as it guarantees the loop starts
+                if (Module.callMain) {
+                     Module.callMain([safeName]);
+                } else if (Module.loadGame) {
                      Module.loadGame(safeName);
-                } else {
-                     console.warn("Module.loadGame not found, attempting callMain fallback");
-                     if(Module.callMain) Module.callMain([safeName]);
                 }
                 
-                // 3. Force Reset just to be sure (though usually init is fresh)
-                if (Module.resetGame) {
-                    Module.resetGame();
-                }
+                // REMOVED: resetGame() on first load. This was causing the black screen.
                 
                 gameMode = 'rom';
 

@@ -45,7 +45,7 @@
         canvas#canvas {
             display: none; 
             width: 100%; height: 100%;
-            image-rendering: pixelated; /* Essential for sharp GBA look */
+            image-rendering: pixelated; 
             background-color: #000;
         }
         
@@ -57,13 +57,10 @@
             overflow: hidden;
             justify-content: flex-start;
             padding: 20px;
-            display: none; /* Initially hidden */
+            display: none;
             flex-direction: column;
         }
-        #key-selection-modal h2 {
-            flex-shrink: 0;
-            margin-bottom: 15px;
-        }
+        #key-selection-modal h2 { flex-shrink: 0; margin-bottom: 15px; }
         #virtual-keypad {
             flex-grow: 1;
             overflow-y: auto;
@@ -88,11 +85,7 @@
             color: #374151;
         }
         .virtual-key-btn:active { background: #e5e7eb; }
-        #btn-cancel-key-select {
-            flex-shrink: 0;
-            width: 100%;
-            margin-top: auto; /* Push to bottom if needed, though flex-grow handles spacing */
-        }
+        #btn-cancel-key-select { flex-shrink: 0; width: 100%; margin-top: auto; }
 
         #start-screen { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 20; text-align: center; color: #000000; background-color: #ffffff; }
         .nann-pill { border: 3px solid #000000; border-radius: 50px; padding: 4px 24px; display: inline-block; margin-bottom: 20px; background: transparent; }
@@ -101,13 +94,12 @@
         .menu-btn { width: 90%; padding: 5px 0; margin: 2px 0; background-color: #f3f4f6; border: 2px solid #d1d5db; border-radius: 6px; font-weight: bold; font-size: 12px; color: #374151; text-align: center; cursor: pointer; transition: all 0.2s; flex-shrink: 0; }
         .menu-btn:active { background-color: #e5e7eb; transform: scale(0.98); }
         .btn-red { margin-top: 8px; padding: 6px 20px; background-color: #dc2626; color: white; border-radius: 6px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); font-size: 12px; font-weight: bold; border: none; cursor: pointer; }
-        .btn-blue { margin-top: 4px; padding: 6px 20px; background-color: #2563eb; color: white; border-radius: 6px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); font-size: 12px; font-weight: bold; border: none; cursor: pointer; }
         .btn-back { margin-top: 8px; padding: 6px 20px; background-color: #4b5563; color: white; border-radius: 6px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); font-size: 12px; font-weight: bold; border: none; cursor: pointer; }
 
         .text-battery { font-size: 10px; color: var(--text-battery); font-weight: bold; letter-spacing: 0.05em; }
         .theme-option { display: flex; align-items: center; width: 100%; padding: 6px; margin: 2px 0; border: 1px solid #eee; border-radius: 6px; cursor: pointer; flex-shrink: 0; font-size: 12px; }
         .theme-preview { width: 20px; height: 20px; border-radius: 50%; margin-right: 10px; border: 2px solid rgba(0,0,0,0.1); }
-        #file-input-html, #file-input-rom, #file-input-zip-web, #file-input-sav { display: none; } 
+        #file-input-html, #file-input-rom, #file-input-zip-web { display: none; } 
         
         .nann-brand { font-family: 'Inter', sans-serif; font-style: italic; font-weight: 900; color: rgba(0,0,0,0.6); font-size: 28px; letter-spacing: 1px; margin-top: 20px; margin-bottom: 10px; text-shadow: 1px 1px 0px rgba(255, 255, 255, 0.2), -1px -1px 0px rgba(0, 0, 0, 0.2); }
         .controls-area { width: 100%; flex-grow: 1; position: relative; transform: translate3d(0,0,0); }
@@ -638,11 +630,7 @@
                 debugLog("Swapping Cartridge...");
                 window.Module.loadGame(safeName);
                 
-                // 4. Force Reset (Hard Boot) to ensure game reads the restored .sav
-                // CRITICAL: Only reset on reload, not first load!
-                if (window.Module.resetGame) {
-                    window.Module.resetGame();
-                }
+                // CRITICAL: NO MANUAL RESET. Let loadGame handle startup.
 
                 gameMode = 'rom';
                 
@@ -692,6 +680,7 @@
             document.getElementById('start-screen').style.display = 'none';
             document.getElementById('game-iframe').style.display = 'none';
 
+            // CONFIG strictly as per user reference
             const config = {
                 canvas: canvas
             };
@@ -700,8 +689,13 @@
                 const mGBA = await import('./mgba.js');
                 const moduleFactory = mGBA.default || mGBA; 
 
+                // 1. AWAIT FACTORY with CANVAS config
                 const Module = await moduleFactory(config);
+                
+                // 2. AWAIT FS INIT (Essential step from reference)
                 await Module.FSInit();
+
+                // 3. ASSIGN GLOBALS AFTER INIT
                 window.Module = Module; 
 
                 debugLog("mGBA Module Loaded & FS Initialized.");
@@ -723,6 +717,7 @@
                 const ext = romName.split('.').pop();
                 const safeName = 'game.' + ext;
                 
+                // Write ROM
                 Module.FS.writeFile(safeName, new Uint8Array(romBuffer));
                 
                 // 3. START GAME
@@ -734,11 +729,7 @@
                      console.error("Critical: loadGame not found in Module contract.");
                 }
                 
-                // REMOVED: resetGame() on first load. This was causing the black screen.
-                // ADDED: Resume game explicitly just in case
-                if(Module.resumeGame) {
-                    setTimeout(() => Module.resumeGame(), 100);
-                }
+                // NO MANUAL RESET/RESUME. Trust loadGame().
                 
                 gameMode = 'rom';
 

@@ -630,7 +630,7 @@
                 debugLog("Swapping Cartridge...");
                 window.Module.loadGame(safeName);
                 
-                // CRITICAL: NO MANUAL RESET. Let loadGame handle startup.
+                // NO MANUAL RESET/RESUME. Trust loadGame().
 
                 gameMode = 'rom';
                 

@@ -549,16 +549,14 @@
             }
             canvas.style.display = 'block';
             
-            // REMOVE Manual getContext() here to fix black screen.
-            // Let the Emulator Module acquire the context.
-
             document.getElementById('start-screen').style.display = 'none';
             document.getElementById('game-iframe').style.display = 'none';
 
+            // CONFIG must contain the canvas immediately
             const config = {
                 canvas: canvas,
-                noInitialRun: true, // FIXED: Prevents auto-run race condition
-                arguments: ['--frameskip', '1'], // Frameskip 1 is vital for mobile smoothness
+                noInitialRun: true,
+                arguments: ['--frameskip', '1'],
                 locateFile: function(path, prefix) {
                     if (path.endsWith('.wasm')) {
                         return 'mgba.wasm';
@@ -567,35 +565,34 @@
                 }
             };
             
-            window.Module = config;
+            // DON'T assign global window.Module = config here.
+            // Let the factory handle it cleanly.
 
             try {
                 const mGBA = await import('./mgba.js');
-                const moduleFactory = mGBA.default; 
+                const moduleFactory = mGBA.default || mGBA; 
 
+                // 1. AWAIT FACTORY with CANVAS config
                 const Module = await moduleFactory(config);
+                
+                // 2. AWAIT FS INIT (Essential step from reference)
+                await Module.FSInit();
+
+                // 3. ASSIGN GLOBALS AFTER INIT
                 window.Module = Module; 
-                Module.canvas = canvas;
 
-                debugLog("mGBA Module Loaded.");
-
-                if (Module.FSInit) {
-                    await Module.FSInit();
-                } 
+                debugLog("mGBA Module Loaded & FS Initialized.");
 
                 const ext = romName.split('.').pop();
                 const safeName = 'game.' + ext;
                 
-                if (Module.FS) {
-                    Module.FS.writeFile(safeName, new Uint8Array(romBuffer));
-                } else if (typeof FS !== 'undefined') {
-                    FS.writeFile(safeName, new Uint8Array(romBuffer));
-                }
-
-                // CRITICAL FIX: Use callMain if available to ensure loop starts
+                // 4. WRITE FILE
+                Module.FS.writeFile(safeName, new Uint8Array(romBuffer));
+                
+                // 5. BOOT GAME
+                // Prefer callMain for first boot if available
                 if (Module.callMain) {
-                    // Try standard callMain boot
-                    Module.callMain([safeName, '--frameskip', '1']);
+                    Module.callMain([safeName]);
                 } else if (Module.loadGame) {
                      Module.loadGame(safeName);
                 }

@@ -52,6 +52,41 @@
         .menu-ui { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-color: white; padding: 8px 12px; display: none; flex-direction: column; align-items: center; justify-content: center; z-index: 100; overflow-y: auto; }
         .menu-ui h2 { margin-top: 0; margin-bottom: 6px; font-size: 16px; }
         
+        /* PINNED CANCEL BUTTON STYLES - FIXED */
+        #key-selection-modal {
+            overflow: hidden;
+            justify-content: flex-start;
+            padding: 20px;
+            display: none;
+            flex-direction: column;
+        }
+        #key-selection-modal h2 { flex-shrink: 0; margin-bottom: 15px; }
+        #virtual-keypad {
+            flex-grow: 1;
+            overflow-y: auto;
+            width: 100%;
+            max-height: none !important;
+            margin-bottom: 15px;
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 8px;
+            align-content: start;
+            padding-bottom: 10px;
+        }
+        .virtual-key-btn {
+            background: #f3f4f6;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            padding: 10px 0;
+            text-align: center;
+            font-weight: bold;
+            font-size: 14px;
+            cursor: pointer;
+            color: #374151;
+        }
+        .virtual-key-btn:active { background: #e5e7eb; }
+        #btn-cancel-key-select { flex-shrink: 0; width: 100%; margin-top: auto; }
+
         #start-screen { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 20; text-align: center; color: #000000; background-color: #ffffff; }
         .nann-pill { border: 3px solid #000000; border-radius: 50px; padding: 4px 24px; display: inline-block; margin-bottom: 20px; background: transparent; }
         .nann-logo-text { font-family: 'Inter', sans-serif; font-weight: 900; font-size: 28px; color: #000000; letter-spacing: 1px; line-height: 1; }
@@ -64,7 +99,7 @@
         .text-battery { font-size: 10px; color: var(--text-battery); font-weight: bold; letter-spacing: 0.05em; }
         .theme-option { display: flex; align-items: center; width: 100%; padding: 6px; margin: 2px 0; border: 1px solid #eee; border-radius: 6px; cursor: pointer; flex-shrink: 0; font-size: 12px; }
         .theme-preview { width: 20px; height: 20px; border-radius: 50%; margin-right: 10px; border: 2px solid rgba(0,0,0,0.1); }
-        #file-input-html, #file-input-rom, #file-input-zip-web { display: none; } 
+        #file-input-html, #file-input-rom, #file-input-zip-web, #file-input-sav { display: none; } 
         
         .nann-brand { font-family: 'Inter', sans-serif; font-style: italic; font-weight: 900; color: rgba(0,0,0,0.6); font-size: 28px; letter-spacing: 1px; margin-top: 20px; margin-bottom: 10px; text-shadow: 1px 1px 0px rgba(255, 255, 255, 0.2), -1px -1px 0px rgba(0, 0, 0, 0.2); }
         .controls-area { width: 100%; flex-grow: 1; position: relative; transform: translate3d(0,0,0); }
@@ -159,6 +194,7 @@
                     <input type="file" id="file-input-rom" accept=".gb,.gbc,.gba,.zip" style="display:none">
                     <input type="file" id="file-input-html" accept=".html,text/html" style="display:none">
                     <input type="file" id="file-input-zip-web" accept=".zip" style="display:none">
+                    <input type="file" id="file-input-sav" accept=".sav" style="display:none">
                     
                     <div id="start-menu" class="menu-ui"><h2 class="text-lg font-bold mb-3 text-gray-800 tracking-wider">PAUSE</h2><div class="text-xs text-center text-gray-500 mb-2">Use in-game saves.</div><button id="btn-close-start-menu" class="btn-red">Resume</button></div>
                     <div id="styles-menu" class="menu-ui"><h2 class="text-xl font-bold mb-4 text-gray-800">STYLES</h2><div class="w-full max-h-[140px] overflow-y-auto px-4">
@@ -173,7 +209,7 @@
                         <div class="theme-option" data-theme="black"><div class="theme-preview" style="background: linear-gradient(145deg, #27272a, #000000);"></div><span class="font-bold text-gray-700">Midnight Black</span></div>
                     </div><button id="btn-back-styles" class="btn-back">Back</button></div>
                     <div id="key-binding-menu" class="menu-ui"><h2 class="text-xl font-bold mb-4 text-gray-800">Controls</h2><div id="bindings-list" class="max-h-40 overflow-y-auto w-full flex flex-col items-center"></div><button id="btn-close-key-map" class="btn-red">Close</button></div>
-                    <div id="key-selection-modal" class="menu-ui" style="display: none; z-index: 300;"><h2 class="text-xl font-bold mb-4 text-gray-800">Map <span id="binding-label-display" class="text-red-600"></span></h2><div id="virtual-keypad" class="grid grid-cols-5 gap-2 p-2 max-w-sm overflow-y-auto" style="max-height: 70%;"></div><button id="btn-cancel-key-select" class="btn-red">Cancel</button></div>
+                    <div id="key-selection-modal" class="menu-ui" style="display: none; z-index: 300;"><h2 class="text-xl font-bold mb-4 text-gray-800">Map <span id="binding-label-display" class="text-red-600"></span></h2><div id="virtual-keypad"></div><button id="btn-cancel-key-select" class="btn-red">Cancel</button></div>
                     
                     <div id="toast-notification">GAME SAVED</div>
                 </div>
@@ -204,6 +240,7 @@
         let auth;
         let userId = null;
         let gameMode = 'html'; 
+        let currentRomName = '';
         
         let keyMap = {
             'Up': { key: 'ArrowUp' },
@@ -227,6 +264,10 @@
         let audioCtx = null;
         let mainGainNode = null; 
 
+        // SAVE SYSTEM VARIABLES
+        let saveCheckInterval = null;
+        let lastSaveTime = 0;
+
         function initAudio() {
             if (!audioCtx) {
                 const AudioContext = window.AudioContext || window.webkitAudioContext;
@@ -242,12 +283,9 @@
         }
 
         function playHapticSound() {
-            if (!audioCtx) return; // Haptics can use direct destination if needed or check context
-            // For simple haptics, we can create a separate path if main game is muted
-            // but for now let's just respect the context state
+            if (!audioCtx) return; 
             const t = audioCtx.currentTime;
             
-            // Bypass the mainGainNode for UI sounds so they work even if game audio is fading in
             const uiGain = audioCtx.createGain();
             uiGain.connect(audioCtx.destination);
             
@@ -269,12 +307,9 @@
             clickOsc.stop(t + 0.02);
         }
 
-        // --- SAFE AUDIO FADE IN ---
-        // Call this only when the game loop is definitely running
         function fadeInGameAudio() {
             if(audioCtx && mainGainNode) {
                 const t = audioCtx.currentTime;
-                // Ramp up from 0 to 1 over 1.0 second
                 mainGainNode.gain.setTargetAtTime(1.0, t, 0.5);
             }
         }
@@ -434,6 +469,8 @@
         function toggleMenu(menuId) { if (currentMenu === menuId) closeAllMenus(); else openMenu(menuId); }
         
         function stopCurrentGame() {
+            if(saveCheckInterval) clearInterval(saveCheckInterval);
+            
             const iframe = document.getElementById('game-iframe');
             iframe.src = 'about:blank';
             iframe.style.display = 'none';
@@ -460,6 +497,67 @@
             closeAllMenus();
         }
 
+        // --- SAVE PERSISTENCE SYSTEM ---
+        function getSaveKey(romName) {
+            return `nannboy-save-${romName}`;
+        }
+
+        function showToast(msg) {
+            const toast = document.getElementById('toast-notification');
+            toast.textContent = msg;
+            toast.style.opacity = 1;
+            setTimeout(() => { toast.style.opacity = 0; }, 2000);
+        }
+
+        function syncSaveToStorage() {
+            if (!window.Module || !window.Module.FS || !currentRomName) return;
+            try {
+                // Check if save exists
+                const savePath = 'game.sav';
+                try {
+                    const stat = window.Module.FS.stat(savePath);
+                    if (stat.mtime > lastSaveTime) {
+                        const content = window.Module.FS.readFile(savePath);
+                        // Convert Uint8Array to base64 for LocalStorage
+                        const binary = String.fromCharCode.apply(null, content);
+                        const base64 = btoa(binary);
+                        localStorage.setItem(getSaveKey(currentRomName), base64);
+                        
+                        lastSaveTime = stat.mtime;
+                        console.log(`[Save System] Auto-backed up save for ${currentRomName}`);
+                        showToast("AUTO-SAVED");
+                    }
+                } catch(e) {
+                    // File doesn't exist yet, normal for new games
+                }
+            } catch (err) {
+                console.error("[Save System] Backup failed", err);
+            }
+        }
+
+        function restoreSaveFromStorage(romName) {
+            if (!window.Module || !window.Module.FS) return;
+            try {
+                const b64 = localStorage.getItem(getSaveKey(romName));
+                if (b64) {
+                    const binary = atob(b64);
+                    const len = binary.length;
+                    const bytes = new Uint8Array(len);
+                    for (let i = 0; i < len; i++) {
+                        bytes[i] = binary.charCodeAt(i);
+                    }
+                    window.Module.FS.writeFile('game.sav', bytes);
+                    console.log(`[Save System] Restored save for ${romName}`);
+                    
+                    // Update timestamp so we don't immediately re-save
+                    const stat = window.Module.FS.stat('game.sav');
+                    lastSaveTime = stat.mtime;
+                }
+            } catch (err) {
+                console.error("[Save System] Restore failed", err);
+            }
+        }
+
         document.getElementById('btn-menu-load-game').addEventListener('click', () => { openMenu('load-game-menu'); });
         document.getElementById('btn-back-load-menu').addEventListener('click', () => { openMenu('main-menu'); });
         document.getElementById('btn-menu-exit-game').addEventListener('click', exitGame);
@@ -470,8 +568,10 @@
         document.getElementById('btn-menu-style').addEventListener('click', () => { openMenu('styles-menu'); });
         document.getElementById('btn-close-main-menu').addEventListener('click', () => { closeAllMenus(); });
         
+        document.getElementById('btn-cancel-key-select')?.addEventListener('click', hideKeySelection);
+
         function setupMenuSounds() {
-            const clickables = document.querySelectorAll('.menu-btn, .btn-red, .btn-back, .upload-label, button');
+            const clickables = document.querySelectorAll('.menu-btn, .btn-red, .btn-back, .btn-blue, .upload-label, button');
             clickables.forEach(btn => {
                 btn.addEventListener('click', () => { initAudio(); playHapticSound(); });
             });
@@ -480,6 +580,11 @@
         async function launchMgba(romBuffer, romName) {
             closeAllMenus();
             
+            // Set global tracking variable
+            currentRomName = romName;
+            lastSaveTime = 0;
+            if(saveCheckInterval) clearInterval(saveCheckInterval);
+
             // REUSE LOGIC
             if (window.Module && window.Module.loadGame) {
                 const loadingOverlay = document.getElementById('loading-overlay');
@@ -500,12 +605,32 @@
                 const ext = romName.split('.').pop();
                 const safeName = 'game.' + ext; 
                 debugLog("Overwriting ROM: " + safeName);
+                
+                // --- HARD SAVE ENFORCEMENT ---
+                // 1. Delete states to prevent frozen reload
+                const possibleStates = ['game.ss0', 'game.state', 'game.ss1'];
+                possibleStates.forEach(s => {
+                    try { 
+                        if(window.Module.FS.analyzePath(s).exists) {
+                            window.Module.FS.unlink(s); 
+                            debugLog("Deleted resume state: " + s);
+                        }
+                    } catch(e) {}
+                });
+                
+                // 2. Restore the .sav file
+                restoreSaveFromStorage(romName);
+
+                // 3. Write new ROM file
                 if (window.Module.FS) {
                     window.Module.FS.writeFile(safeName, new Uint8Array(romBuffer));
                 }
                 
                 debugLog("Swapping Cartridge...");
                 window.Module.loadGame(safeName);
+                
+                // CRITICAL: NO MANUAL RESET. Let loadGame handle startup.
+
                 gameMode = 'rom';
                 
                 if (window.Module.toggleRewind) window.Module.toggleRewind(false);
@@ -518,10 +643,12 @@
                 document.getElementById('start-screen').style.display = 'none';
                 document.getElementById('btn-menu-exit-game').style.display = 'block';
                 
-                // HIDE OVERLAY & FADE IN AUDIO
+                // Start Save Monitor
+                saveCheckInterval = setInterval(syncSaveToStorage, 1000);
+
                 setTimeout(() => { 
                     if(loadingOverlay) loadingOverlay.style.display = 'none'; 
-                    fadeInGameAudio(); // Only unmute when game is visible
+                    fadeInGameAudio(); 
                 }, 2000);
                 
                 if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
@@ -553,7 +680,6 @@
             document.getElementById('game-iframe').style.display = 'none';
 
             // CONFIG strictly as per user reference
-            // No arguments, no noInitialRun. Just canvas.
             const config = {
                 canvas: canvas
             };
@@ -572,21 +698,37 @@
                 window.Module = Module; 
 
                 debugLog("mGBA Module Loaded & FS Initialized.");
+                
+                // --- HARD SAVE ENFORCEMENT (INIT PHASE) ---
+                // 1. Delete states
+                const possibleStates = ['game.ss0', 'game.state', 'game.ss1'];
+                possibleStates.forEach(s => {
+                    try { 
+                        if(Module.FS.analyzePath(s).exists) {
+                            Module.FS.unlink(s); 
+                        }
+                    } catch(e) {}
+                });
+
+                // 2. Restore Save
+                restoreSaveFromStorage(romName);
 
                 const ext = romName.split('.').pop();
                 const safeName = 'game.' + ext;
                 
-                // 4. WRITE FILE
+                // Write ROM
                 Module.FS.writeFile(safeName, new Uint8Array(romBuffer));
                 
-                // 5. BOOT GAME using loadGame (standard for this build pattern)
+                // 3. START GAME
                 if (Module.loadGame) {
                      Module.loadGame(safeName);
                 } else {
-                     // Fallback only if absolutely necessary
-                     console.warn("Module.loadGame not found, attempting callMain fallback");
+                     console.error("Critical: loadGame not found in Module contract.");
+                     // Emergency fallback just in case
                      if(Module.callMain) Module.callMain([safeName]);
                 }
+                
+                // NO MANUAL RESET. Trust loadGame().
                 
                 gameMode = 'rom';
 
@@ -597,10 +739,12 @@
                 document.getElementById('power-led').classList.add('on');
                 document.getElementById('btn-menu-exit-game').style.display = 'block'; 
                  
-                // HIDE OVERLAY & FADE IN AUDIO
+                // Start Save Monitor
+                saveCheckInterval = setInterval(syncSaveToStorage, 1000);
+
                 setTimeout(() => {
                     if(loadingOverlay) loadingOverlay.style.display = 'none';
-                    fadeInGameAudio(); // Safe un-mute
+                    fadeInGameAudio(); 
                 }, 2000);
                  
                 if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();

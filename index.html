@@ -52,41 +52,6 @@
         .menu-ui { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-color: white; padding: 8px 12px; display: none; flex-direction: column; align-items: center; justify-content: center; z-index: 100; overflow-y: auto; }
         .menu-ui h2 { margin-top: 0; margin-bottom: 6px; font-size: 16px; }
         
-        /* PINNED CANCEL BUTTON STYLES - FIXED */
-        #key-selection-modal {
-            overflow: hidden;
-            justify-content: flex-start;
-            padding: 20px;
-            display: none;
-            flex-direction: column;
-        }
-        #key-selection-modal h2 { flex-shrink: 0; margin-bottom: 15px; }
-        #virtual-keypad {
-            flex-grow: 1;
-            overflow-y: auto;
-            width: 100%;
-            max-height: none !important;
-            margin-bottom: 15px;
-            display: grid;
-            grid-template-columns: repeat(5, 1fr);
-            gap: 8px;
-            align-content: start;
-            padding-bottom: 10px;
-        }
-        .virtual-key-btn {
-            background: #f3f4f6;
-            border: 1px solid #d1d5db;
-            border-radius: 6px;
-            padding: 10px 0;
-            text-align: center;
-            font-weight: bold;
-            font-size: 14px;
-            cursor: pointer;
-            color: #374151;
-        }
-        .virtual-key-btn:active { background: #e5e7eb; }
-        #btn-cancel-key-select { flex-shrink: 0; width: 100%; margin-top: auto; }
-
         #start-screen { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 20; text-align: center; color: #000000; background-color: #ffffff; }
         .nann-pill { border: 3px solid #000000; border-radius: 50px; padding: 4px 24px; display: inline-block; margin-bottom: 20px; background: transparent; }
         .nann-logo-text { font-family: 'Inter', sans-serif; font-weight: 900; font-size: 28px; color: #000000; letter-spacing: 1px; line-height: 1; }
@@ -94,6 +59,7 @@
         .menu-btn { width: 90%; padding: 5px 0; margin: 2px 0; background-color: #f3f4f6; border: 2px solid #d1d5db; border-radius: 6px; font-weight: bold; font-size: 12px; color: #374151; text-align: center; cursor: pointer; transition: all 0.2s; flex-shrink: 0; }
         .menu-btn:active { background-color: #e5e7eb; transform: scale(0.98); }
         .btn-red { margin-top: 8px; padding: 6px 20px; background-color: #dc2626; color: white; border-radius: 6px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); font-size: 12px; font-weight: bold; border: none; cursor: pointer; }
+        .btn-blue { margin-top: 4px; padding: 6px 20px; background-color: #2563eb; color: white; border-radius: 6px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); font-size: 12px; font-weight: bold; border: none; cursor: pointer; }
         .btn-back { margin-top: 8px; padding: 6px 20px; background-color: #4b5563; color: white; border-radius: 6px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); font-size: 12px; font-weight: bold; border: none; cursor: pointer; }
 
         .text-battery { font-size: 10px; color: var(--text-battery); font-weight: bold; letter-spacing: 0.05em; }
@@ -188,6 +154,12 @@
                         <div class="menu-btn" id="btn-load-rom-action">ROM FILE</div>
                         <div class="menu-btn" id="btn-load-html-file">HTML FILE</div>
                         <div class="menu-btn" id="btn-load-zip-web">WEB ZIP</div>
+                        
+                        <div class="w-full border-t border-gray-200 my-2"></div>
+                        <h3 class="text-xs font-bold text-gray-400 mb-1">DATA MANAGEMENT</h3>
+                        <div class="menu-btn" id="btn-export-save">EXPORT SAVE (.sav)</div>
+                        <div class="menu-btn" id="btn-import-save">IMPORT SAVE (.sav)</div>
+                        
                         <button id="btn-back-load-menu" class="btn-back">Back</button>
                     </div>
                     
@@ -209,7 +181,7 @@
                         <div class="theme-option" data-theme="black"><div class="theme-preview" style="background: linear-gradient(145deg, #27272a, #000000);"></div><span class="font-bold text-gray-700">Midnight Black</span></div>
                     </div><button id="btn-back-styles" class="btn-back">Back</button></div>
                     <div id="key-binding-menu" class="menu-ui"><h2 class="text-xl font-bold mb-4 text-gray-800">Controls</h2><div id="bindings-list" class="max-h-40 overflow-y-auto w-full flex flex-col items-center"></div><button id="btn-close-key-map" class="btn-red">Close</button></div>
-                    <div id="key-selection-modal" class="menu-ui" style="display: none; z-index: 300;"><h2 class="text-xl font-bold mb-4 text-gray-800">Map <span id="binding-label-display" class="text-red-600"></span></h2><div id="virtual-keypad"></div><button id="btn-cancel-key-select" class="btn-red">Cancel</button></div>
+                    <div id="key-selection-modal" class="menu-ui" style="display: none; z-index: 300;"><h2 class="text-xl font-bold mb-4 text-gray-800">Map <span id="binding-label-display" class="text-red-600"></span></h2><div id="virtual-keypad" class="grid grid-cols-5 gap-2 p-2 max-w-sm overflow-y-auto" style="max-height: 70%;"></div><button id="btn-cancel-key-select" class="btn-red">Cancel</button></div>
                     
                     <div id="toast-notification">GAME SAVED</div>
                 </div>
@@ -558,6 +530,70 @@
             }
         }
 
+        function exportSave() {
+            if(!currentRomName) return;
+            try {
+                // 1. Try Memory FS first
+                let saveBytes = null;
+                if(window.Module && window.Module.FS) {
+                    try {
+                         saveBytes = window.Module.FS.readFile('game.sav');
+                    } catch(e){}
+                }
+                
+                // 2. Fallback to LocalStorage
+                if(!saveBytes) {
+                    const b64 = localStorage.getItem(getSaveKey(currentRomName));
+                    if(b64) {
+                        const binary = atob(b64);
+                        saveBytes = new Uint8Array(binary.length);
+                        for(let i=0; i<binary.length; i++) saveBytes[i] = binary.charCodeAt(i);
+                    }
+                }
+
+                if(saveBytes) {
+                    const blob = new Blob([saveBytes], {type: "application/octet-stream"});
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    // Use original name if possible, replace ext with .sav
+                    const saveName = currentRomName.replace(/\.(gb|gbc|gba|zip)$/i, '') + '.sav';
+                    a.download = saveName;
+                    a.click();
+                    URL.revokeObjectURL(url);
+                } else {
+                    alert("No save data found to export.");
+                }
+            } catch(e) {
+                console.error(e);
+                alert("Export failed.");
+            }
+        }
+
+        function importSave(event) {
+            const file = event.target.files[0];
+            if(!file || !currentRomName) return;
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const buffer = e.target.result;
+                const bytes = new Uint8Array(buffer);
+                
+                // Write to FS
+                if(window.Module && window.Module.FS) {
+                    window.Module.FS.writeFile('game.sav', bytes);
+                }
+                
+                // Write to LocalStorage (Persist)
+                const binary = String.fromCharCode.apply(null, bytes);
+                localStorage.setItem(getSaveKey(currentRomName), btoa(binary));
+                
+                alert("Save imported! Please Restart the game via menu (Exit Game -> Load ROM) to take effect.");
+                closeAllMenus();
+            };
+            reader.readAsArrayBuffer(file);
+        }
+
         document.getElementById('btn-menu-load-game').addEventListener('click', () => { openMenu('load-game-menu'); });
         document.getElementById('btn-back-load-menu').addEventListener('click', () => { openMenu('main-menu'); });
         document.getElementById('btn-menu-exit-game').addEventListener('click', exitGame);
@@ -568,7 +604,9 @@
         document.getElementById('btn-menu-style').addEventListener('click', () => { openMenu('styles-menu'); });
         document.getElementById('btn-close-main-menu').addEventListener('click', () => { closeAllMenus(); });
         
-        document.getElementById('btn-cancel-key-select')?.addEventListener('click', hideKeySelection);
+        document.getElementById('btn-export-save').addEventListener('click', exportSave);
+        document.getElementById('btn-import-save').addEventListener('click', () => { document.getElementById('file-input-sav').click(); });
+        document.getElementById('file-input-sav').addEventListener('change', (e) => { importSave(e); e.target.value = null; });
 
         function setupMenuSounds() {
             const clickables = document.querySelectorAll('.menu-btn, .btn-red, .btn-back, .btn-blue, .upload-label, button');
@@ -630,7 +668,10 @@
                 debugLog("Swapping Cartridge...");
                 window.Module.loadGame(safeName);
                 
-                // NO MANUAL RESET/RESUME. Trust loadGame().
+                // 4. Force Reset (Hard Boot) to ensure game reads the restored .sav
+                if (window.Module.resetGame) {
+                    window.Module.resetGame();
+                }
 
                 gameMode = 'rom';
                 
@@ -680,28 +721,16 @@
             document.getElementById('start-screen').style.display = 'none';
             document.getElementById('game-iframe').style.display = 'none';
 
-            // CONFIG strictly as per user reference
             const config = {
-                canvas: canvas,
-                locateFile: function(path, prefix) {
-                    if (path.endsWith('.wasm')) {
-                        return 'mgba.wasm';
-                    }
-                    return prefix + path;
-                }
+                canvas: canvas
             };
             
             try {
                 const mGBA = await import('./mgba.js');
                 const moduleFactory = mGBA.default || mGBA; 
 
-                // 1. AWAIT FACTORY with CANVAS config
                 const Module = await moduleFactory(config);
-                
-                // 2. AWAIT FS INIT (Essential step from reference)
                 await Module.FSInit();
-
-                // 3. ASSIGN GLOBALS AFTER INIT
                 window.Module = Module; 
 
                 debugLog("mGBA Module Loaded & FS Initialized.");
@@ -723,19 +752,19 @@
                 const ext = romName.split('.').pop();
                 const safeName = 'game.' + ext;
                 
-                // Write ROM
                 Module.FS.writeFile(safeName, new Uint8Array(romBuffer));
                 
-                // 3. START GAME
-                // STRICTLY use loadGame as per contract
                 if (Module.loadGame) {
                      Module.loadGame(safeName);
                 } else {
-                     // Fallback only if contract fails (should not happen with correct build)
-                     console.error("Critical: loadGame not found in Module contract.");
+                     console.warn("Module.loadGame not found, attempting callMain fallback");
+                     if(Module.callMain) Module.callMain([safeName]);
                 }
                 
-                // NO MANUAL RESET/RESUME. Trust loadGame().
+                // 3. Force Reset just to be sure (though usually init is fresh)
+                if (Module.resetGame) {
+                    Module.resetGame();
+                }
                 
                 gameMode = 'rom';
 

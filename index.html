@@ -557,6 +557,7 @@
 
             const config = {
                 canvas: canvas,
+                noInitialRun: true, // FIXED: Prevents auto-run race condition
                 arguments: ['--frameskip', '1'], // Frameskip 1 is vital for mobile smoothness
                 locateFile: function(path, prefix) {
                     if (path.endsWith('.wasm')) {

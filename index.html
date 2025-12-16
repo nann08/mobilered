@@ -98,6 +98,31 @@
         #close-install { position: absolute; top: 5px; right: 10px; font-weight: bold; color: #9ca3af; cursor: pointer; }
         #toast-notification { position: absolute; bottom: 80px; left: 50%; transform: translateX(-50%); background-color: #1f2937; color: white; padding: 4px 10px; border-radius: 9999px; font-size: 0.75rem; font-weight: bold; opacity: 0; pointer-events: none; transition: opacity 0.3s; z-index: 300; }
         
+        /* Key Selection Modal Specifics for Mobile Layout */
+        #key-selection-modal {
+            justify-content: flex-start !important; /* Override center alignment */
+            padding-top: calc(20px + var(--safe-top));
+            padding-bottom: calc(20px + var(--safe-bottom));
+            overflow: hidden !important; /* Prevent body scroll, handle internally */
+        }
+        #virtual-keypad {
+            flex-grow: 1; /* Fill available space */
+            overflow-y: auto; /* Scroll internally */
+            min-height: 0; /* Flexbox scrolling fix */
+            width: 100%;
+            align-content: start; /* Grid items start at top */
+            margin-bottom: 15px;
+            /* Scrollbar styling */
+            scrollbar-width: thin;
+            scrollbar-color: rgba(0,0,0,0.2) transparent;
+        }
+        #btn-cancel-key-select {
+            flex-shrink: 0; /* Don't shrink */
+            margin-top: 0; 
+            width: 80%;
+            max-width: 300px;
+        }
+
         /* LOADING OVERLAY - Contained relative to nearest relative parent (.lcd-screen) */
         #loading-overlay {
             position: absolute;
@@ -188,7 +213,13 @@
                         <div class="theme-option" data-theme="black"><div class="theme-preview" style="background: linear-gradient(145deg, #27272a, #000000);"></div><span class="font-bold text-gray-700">Midnight Black</span></div>
                     </div><button id="btn-back-styles" class="btn-back">Back</button></div>
                     <div id="key-binding-menu" class="menu-ui"><h2 class="text-xl font-bold mb-4 text-gray-800">Controls</h2><div id="bindings-list" class="max-h-40 overflow-y-auto w-full flex flex-col items-center"></div><button id="btn-close-key-map" class="btn-red">Close</button></div>
-                    <div id="key-selection-modal" class="menu-ui" style="display: none; z-index: 300;"><h2 class="text-xl font-bold mb-4 text-gray-800">Map <span id="binding-label-display" class="text-red-600"></span></h2><div id="virtual-keypad" class="grid grid-cols-5 gap-2 p-2 max-w-sm overflow-y-auto" style="max-height: 70%;"></div><button id="btn-cancel-key-select" class="btn-red">Cancel</button></div>
+                    
+                    <!-- Modified Key Selection Modal Structure -->
+                    <div id="key-selection-modal" class="menu-ui" style="display: none; z-index: 300;">
+                        <h2 class="text-xl font-bold mb-4 text-gray-800 flex-shrink-0">Map <span id="binding-label-display" class="text-red-600"></span></h2>
+                        <div id="virtual-keypad" class="grid grid-cols-5 gap-2 p-2 max-w-sm"></div>
+                        <button id="btn-cancel-key-select" class="btn-red">Cancel</button>
+                    </div>
                     
                     <div id="toast-notification">GAME SAVED</div>
                 </div>

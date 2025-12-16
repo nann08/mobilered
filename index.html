@@ -213,7 +213,11 @@
                         <div class="theme-option" data-theme="black"><div class="theme-preview" style="background: linear-gradient(145deg, #27272a, #000000);"></div><span class="font-bold text-gray-700">Midnight Black</span></div>
                     </div><button id="btn-back-styles" class="btn-back">Back</button></div>
                     <div id="key-binding-menu" class="menu-ui"><h2 class="text-xl font-bold mb-4 text-gray-800">Controls</h2><div id="bindings-list" class="max-h-40 overflow-y-auto w-full flex flex-col items-center"></div><button id="btn-close-key-map" class="btn-red">Close</button></div>
-                    <div id="key-selection-modal" class="menu-ui" style="display: none; z-index: 300;"><h2 class="text-xl font-bold mb-4 text-gray-800 flex-shrink-0">Map <span id="binding-label-display" class="text-red-600"></span></h2><div id="virtual-keypad" class="grid grid-cols-5 gap-2 p-2 max-w-sm"></div><button id="btn-cancel-key-select" class="btn-red">Cancel</button></div>
+                    <div id="key-selection-modal" class="menu-ui" style="display: none; z-index: 300;">
+                        <h2 class="text-xl font-bold mb-4 text-gray-800 flex-shrink-0">Map <span id="binding-label-display" class="text-red-600"></span></h2>
+                        <div id="virtual-keypad" class="grid grid-cols-5 gap-2 p-2 max-w-sm"></div>
+                        <button id="btn-cancel-key-select" class="btn-red">Cancel</button>
+                    </div>
                     
                     <div id="toast-notification">GAME SAVED</div>
                 </div>
@@ -245,15 +249,16 @@
         let userId = null;
         let gameMode = 'html'; 
         
+        // UPDATED: Added keyCode and code properties to ensure HTML games recognize the inputs
         let keyMap = {
-            'Up': { key: 'ArrowUp' },
-            'Down': { key: 'ArrowDown' },
-            'Left': { key: 'ArrowLeft' },
-            'Right': { key: 'ArrowRight' }, 
-            'A': { key: 'x' },  
-            'B': { key: 'z' },  
-            'Start': { key: 'Enter' },
-            'Select': { key: 'Backspace' },
+            'Up': { key: 'ArrowUp', code: 'ArrowUp', keyCode: 38 },
+            'Down': { key: 'ArrowDown', code: 'ArrowDown', keyCode: 40 },
+            'Left': { key: 'ArrowLeft', code: 'ArrowLeft', keyCode: 37 },
+            'Right': { key: 'ArrowRight', code: 'ArrowRight', keyCode: 39 }, 
+            'A': { key: 'x', code: 'KeyX', keyCode: 88 },  
+            'B': { key: 'z', code: 'KeyZ', keyCode: 90 },  
+            'Start': { key: 'Enter', code: 'Enter', keyCode: 13 },
+            'Select': { key: 'Backspace', code: 'Backspace', keyCode: 8 },
         };
         
         const keyMapStorageKey = `emulator-keymap-${appId}`;
@@ -422,7 +427,8 @@
             currentMenu = 'keyselect'; document.getElementById('key-selection-modal').style.display = 'flex';
             document.getElementById('binding-label-display').textContent = label;
             const keypad = document.getElementById('virtual-keypad'); keypad.innerHTML = '';
-            const keys = [{k:'1',c:'Digit1',d:'1'},{k:'2',c:'Digit2',d:'2'},{k:'3',c:'Digit3',d:'3'},{k:'4',c:'Digit4',d:'4'},{k:'5',c:'Digit5',d:'5'},{k:'q',c:'KeyQ',d:'Q'},{k:'w',c:'KeyW',d:'W'},{k:'e',c:'KeyE',d:'E'},{k:'r',c:'KeyR',d:'R'},{k:'a',c:'KeyA',d:'A'},{k:'s',c:'KeyS',d:'S'},{k:'d',c:'KeyD',d:'D'},{k:'f',c:'KeyF',d:'F'},{k:'z',c:'KeyZ',d:'Z'},{k:'x',c:'KeyX',d:'X'},{k:'c',c:'KeyC',d:'C'},{k:'v',c:'KeyV',d:'V'},{k:' ',c:'Space',d:'SPACE',kc:32},{k:'Enter',c:'Enter',d:'ENTER',kc:13},{k:'ArrowUp',c:'ArrowUp',d:'↑'},{k:'ArrowDown',c:'ArrowDown',d:'↓'},{k:'ArrowLeft',c:'ArrowLeft',d:'←'},{k:'ArrowRight',c:'ArrowRight',d:'→'}];
+            // Added Backspace to the list of available keys
+            const keys = [{k:'1',c:'Digit1',d:'1'},{k:'2',c:'Digit2',d:'2'},{k:'3',c:'Digit3',d:'3'},{k:'4',c:'Digit4',d:'4'},{k:'5',c:'Digit5',d:'5'},{k:'q',c:'KeyQ',d:'Q'},{k:'w',c:'KeyW',d:'W'},{k:'e',c:'KeyE',d:'E'},{k:'r',c:'KeyR',d:'R'},{k:'a',c:'KeyA',d:'A'},{k:'s',c:'KeyS',d:'S'},{k:'d',c:'KeyD',d:'D'},{k:'f',c:'KeyF',d:'F'},{k:'z',c:'KeyZ',d:'Z'},{k:'x',c:'KeyX',d:'X'},{k:'c',c:'KeyC',d:'C'},{k:'v',c:'KeyV',d:'V'},{k:'Backspace',c:'Backspace',d:'BACK',kc:8},{k:' ',c:'Space',d:'SPACE',kc:32},{k:'Enter',c:'Enter',d:'ENTER',kc:13},{k:'ArrowUp',c:'ArrowUp',d:'↑'},{k:'ArrowDown',c:'ArrowDown',d:'↓'},{k:'ArrowLeft',c:'ArrowLeft',d:'←'},{k:'ArrowRight',c:'ArrowRight',d:'→'}];
             keys.forEach(vKey => { const btn = document.createElement('div'); btn.className = 'virtual-key-btn'; btn.textContent = vKey.display || vKey.d; btn.addEventListener('click', () => { keyMap[label] = { key: vKey.k, code: vKey.c, keyCode: vKey.kc || (vKey.k.length===1 ? vKey.k.toUpperCase().charCodeAt(0) : 0) }; saveKeyMap(); hideKeySelection(); }); keypad.appendChild(btn); });
         }
         function hideKeySelection() { document.getElementById(`binding-key-${activeBindingLabel}`)?.classList.remove('active-binding'); document.getElementById('key-selection-modal').style.display = 'none'; activeBindingLabel = null; currentMenu = 'keymap'; }
@@ -649,19 +655,44 @@
             }
         }
         
-        // HELPER TO INJECT RESIZING STYLES INTO GAME HTML
+        // HELPER TO INJECT RESIZING STYLES AND INPUT SHIM INTO GAME HTML
         function injectFitStyles(htmlContent) {
-            const styleTag = `
+            const shim = `
             <style>
                 html, body { width: 100%; height: 100%; margin: 0; padding: 0; overflow: hidden; background-color: #000; }
                 canvas, #canvas, #game { width: 100% !important; height: 100% !important; object-fit: contain !important; display: block; margin: auto; position: absolute; top: 0; left: 0; right: 0; bottom: 0; }
             </style>
             <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+            <script>
+                // INPUT SHIM: Listen for messages from parent and dispatch KeyboardEvents
+                window.addEventListener('message', function(e) {
+                    if (e.data && (e.data.type === 'keydown' || e.data.type === 'keyup')) {
+                        var ev = new KeyboardEvent(e.data.type, {
+                            key: e.data.key,
+                            code: e.data.code,
+                            keyCode: e.data.keyCode,
+                            which: e.data.keyCode,
+                            bubbles: true,
+                            cancelable: true,
+                            view: window
+                        });
+                        // Dispatch to document and window to ensure game engines catch it
+                        document.dispatchEvent(ev);
+                        window.dispatchEvent(ev);
+                    }
+                });
+                // Ensure the game window has focus so inputs work
+                window.addEventListener('load', function() { window.focus(); });
+                window.addEventListener('click', function() { window.focus(); });
+            <\/script>
             `;
+            
             if (htmlContent.includes('<head>')) {
-                return htmlContent.replace('<head>', '<head>' + styleTag);
+                return htmlContent.replace('<head>', '<head>' + shim);
+            } else if (htmlContent.includes('<body>')) {
+                return htmlContent.replace('<body>', '<body>' + shim);
             } else {
-                return styleTag + htmlContent;
+                return shim + htmlContent;
             }
         }
 

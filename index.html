@@ -459,7 +459,7 @@
         }
         function toggleMenu(menuId) { if (currentMenu === menuId) closeAllMenus(); else openMenu(menuId); }
         
-        // UPDATED: Added fullShutdown parameter to completely kill audio on Exit
+        // UPDATED: "Soft" Stop - Pauses instead of destroys to prevent iOS memory crashes
         async function stopCurrentGame(fullShutdown = false) {
             // 1. Clear Intervals
             if (window.saveSyncInterval) {
@@ -474,60 +474,29 @@
                 iframe.style.display = 'none';
             }
 
-            // 3. Quit mGBA (ROM Games)
-            if (window.Module) {
-                // Try to gracefully stop the game loop
-                if(window.Module.pauseGame) {
-                    try { window.Module.pauseGame(); } catch(e) { }
-                }
-                // Try to quit the emulator runtime
-                if (window.Module.quitMgba) {
-                    try { window.Module.quitMgba(); } catch(e) { }
-                }
-                
-                // Forcefully unmount file system if possible to release locks
-                try {
-                    if (window.Module.FS && window.Module.FS.unmount) {
-                        window.Module.FS.unmount('/data');
-                    }
-                } catch(e) { }
+            // 3. Pause mGBA (ROM Games) - Don't Quit, just Pause
+            if (window.Module && window.Module.pauseGame) {
+                try { window.Module.pauseGame(); } catch(e) { }
             }
             
-            // 4. DESTROY MODULE: Explicitly delete to free memory
-            window.Module = null;
-            try { delete window.Module; } catch(e) {} // Extra safety for strict mode
-
-            // 5. REMOVE CANVAS: Ensure visual cleanup
+            // 4. HIDE CANVAS: Don't remove it, just hide it so we can reuse it later
             const canvas = document.getElementById('canvas');
             if (canvas) { 
-                canvas.remove(); 
+                canvas.style.display = 'none';
             }
 
-            // 6. AUDIO CLEANUP
-            if (fullShutdown) {
-                // Completely close audio context (Exit Game)
-                if (audioCtx) {
-                    try {
-                        if (audioCtx.state !== 'closed') await audioCtx.close();
-                    } catch(e) { console.error("Error closing audio:", e); }
-                    audioCtx = null;
-                    mainGainNode = null;
-                }
-            } else {
-                // Switching games: Suspend to release hardware lock temporarily
-                if (audioCtx && audioCtx.state === 'running') {
-                    audioCtx.suspend();
-                }
+            // 5. Suspend Audio (Don't close, keep it ready for reuse)
+            if (audioCtx && audioCtx.state === 'running') {
+                audioCtx.suspend();
             }
             
-            // 7. Reset LED and Mode
+            // 6. Reset LED and Mode
             const led = document.getElementById('power-led');
             if (led) led.classList.remove('on');
             gameMode = null;
         }
 
         function exitGame() {
-            // Pass true to trigger full audio shutdown
             stopCurrentGame(true);
             document.getElementById('start-screen').style.display = 'flex';
             document.getElementById('btn-menu-exit-game').style.display = 'none';
@@ -566,23 +535,81 @@
                 }
             }
 
-            // Pass false so we don't destroy the audio context we just initialized in handleRomUpload
+            // Stop whatever was running before (Web Game or previous ROM)
+            // This now just PAUSES the engine if it was running
             stopCurrentGame(false); 
 
-            // 1. DYNAMICALLY CREATE CANVAS - Essential for fresh context
-            const lcdScreen = document.getElementById('lcd-screen');
-            let canvas = document.createElement('canvas');
-            canvas.id = 'canvas';
-            canvas.width = 240;
-            canvas.height = 160;
-            // Insert before the placeholder so it sits at the back but visible
-            const placeholder = document.getElementById('canvas-placeholder');
-            lcdScreen.insertBefore(canvas, placeholder);
-            
             document.getElementById('start-screen').style.display = 'none';
             document.getElementById('game-iframe').style.display = 'none';
 
-            // 2. CONFIG OBJECT - STRICTLY AS PER INSTRUCTIONS
+            // REUSE LOGIC: Check if we already have an engine running
+            if (window.Module && document.getElementById('canvas')) {
+                debugLog("Resusing existing mGBA instance...");
+                
+                // Wake up canvas
+                const canvas = document.getElementById('canvas');
+                canvas.style.display = 'block';
+
+                try {
+                    // Mount/Sync logic for saves (ensure we are synced)
+                    if (window.Module.FS.mount) {
+                        try { window.Module.FS.mkdir('/data'); } catch(e) {}
+                        try { window.Module.FS.mount(window.Module.FS.filesystems.IDBFS, {}, '/data'); } catch(e) {}
+                    }
+                    
+                    // Write new ROM
+                    const ext = romName.split('.').pop();
+                    const safeName = '/data/game.' + ext;
+                    window.Module.FS.writeFile(safeName, new Uint8Array(romBuffer));
+                    
+                    // Load and Resume
+                    window.Module.loadGame(safeName);
+                    window.Module.resumeGame();
+                    
+                    gameMode = 'rom';
+                    
+                    // Restart Auto-Sync
+                    window.saveSyncInterval = setInterval(() => {
+                        if (window.Module) {
+                            window.Module.FS.syncfs(false, (err) => {
+                                if(err) console.error("Save Sync Error:", err);
+                            });
+                        }
+                    }, 5000);
+
+                    document.getElementById('power-led').classList.add('on');
+                    document.getElementById('btn-menu-exit-game').style.display = 'block';
+
+                    setTimeout(() => {
+                        if(loadingOverlay) loadingOverlay.style.display = 'none';
+                        fadeInGameAudio();
+                        if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
+                    }, 1000);
+
+                    return; // EXIT FUNCTION EARLY - WE ARE DONE
+                } catch(e) {
+                    console.error("Hot Swap Failed:", e);
+                    // If hot swap fails, fall through to full init below...
+                }
+            }
+
+            // --- FULL INITIALIZATION (Only runs on first load) ---
+
+            // 1. DYNAMICALLY CREATE CANVAS
+            const lcdScreen = document.getElementById('lcd-screen');
+            let canvas = document.getElementById('canvas');
+            if (!canvas) {
+                canvas = document.createElement('canvas');
+                canvas.id = 'canvas';
+                canvas.width = 240;
+                canvas.height = 160;
+                const placeholder = document.getElementById('canvas-placeholder');
+                lcdScreen.insertBefore(canvas, placeholder);
+            } else {
+                canvas.style.display = 'block';
+            }
+            
+            // 2. CONFIG OBJECT
             let canvas_id = 'canvas';
             var Config = {
                 canvas: (function () {
@@ -601,16 +628,9 @@
                 await Module.FSInit();
 
                 // START: Persistence Logic (Hard Saves Only)
-                // We create a /data directory and mount the browser's IDBFS to it.
-                // This ensures files written here (like .sav files) persist across sessions.
                 try {
-                    // Try to make directory (ignore if exists)
                     try { Module.FS.mkdir('/data'); } catch(e) {}
-                    
-                    // Mount IndexedDB to /data
                     Module.FS.mount(Module.FS.filesystems.IDBFS, {}, '/data');
-                    
-                    // Pull existing saves from IndexedDB into the game's memory
                     await new Promise((resolve) => {
                         Module.FS.syncfs(true, (err) => {
                             if (err) console.error("FS Sync Error:", err);
@@ -628,7 +648,6 @@
                 debugLog("mGBA Module Initialized via Factory.");
 
                 const ext = romName.split('.').pop();
-                // CHANGE: Write game to /data/ so its .sav file is created there automatically
                 const safeName = '/data/game.' + ext; 
                 
                 // 6. WRITE ROM & LOAD
@@ -638,7 +657,6 @@
                 gameMode = 'rom';
                 
                 // SETUP AUTO-SYNC FOR HARD SAVES
-                // Syncs memory to IndexedDB every 5 seconds to ensure in-game saves are kept
                 if (window.saveSyncInterval) clearInterval(window.saveSyncInterval);
                 window.saveSyncInterval = setInterval(() => {
                     if (window.Module) {

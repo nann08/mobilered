@@ -187,15 +187,7 @@
                         <div class="theme-option" data-theme="white"><div class="theme-preview" style="background: linear-gradient(145deg, #f3f4f6, #9ca3af);"></div><span class="font-bold text-gray-700">Polar White</span></div>
                         <div class="theme-option" data-theme="black"><div class="theme-preview" style="background: linear-gradient(145deg, #27272a, #000000);"></div><span class="font-bold text-gray-700">Midnight Black</span></div>
                     </div><button id="btn-back-styles" class="btn-back">Back</button></div>
-
-                    <!-- Updated Key Binding Menu: Sticky Footer Logic -->
-                    <div id="key-binding-menu" class="menu-ui" style="justify-content: flex-start; overflow: hidden; padding-bottom: 20px;">
-                        <h2 class="text-xl font-bold mb-4 text-gray-800 flex-shrink-0">Controls</h2>
-                        <!-- Replaced max-h-40 with flex-1 to fill space, removed w-full constraint to prevent edge clipping if needed -->
-                        <div id="bindings-list" class="flex-1 w-full overflow-y-auto flex flex-col items-center mb-4 min-h-0"></div>
-                        <button id="btn-close-key-map" class="btn-red flex-shrink-0">Close</button>
-                    </div>
-
+                    <div id="key-binding-menu" class="menu-ui"><h2 class="text-xl font-bold mb-4 text-gray-800">Controls</h2><div id="bindings-list" class="max-h-40 overflow-y-auto w-full flex flex-col items-center"></div><button id="btn-close-key-map" class="btn-red">Close</button></div>
                     <div id="key-selection-modal" class="menu-ui" style="display: none; z-index: 300;"><h2 class="text-xl font-bold mb-4 text-gray-800">Map <span id="binding-label-display" class="text-red-600"></span></h2><div id="virtual-keypad" class="grid grid-cols-5 gap-2 p-2 max-w-sm overflow-y-auto" style="max-height: 70%;"></div><button id="btn-cancel-key-select" class="btn-red">Cancel</button></div>
                     
                     <div id="toast-notification">GAME SAVED</div>

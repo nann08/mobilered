@@ -602,7 +602,7 @@
             const handleEnd = (e) => {
                 e.preventDefault(); const control = e.currentTarget; const label = control.getAttribute('data-label');
                 handleVirtualPress(label, false, true); handleVisualPress(control, false); updateDpadVisuals(label, false);
-                if (['Select', 'Start'].includes(label) && control.isTap) { const duration = Date.now() - (control.pressTime || 0); if (duration < 300) { if (label === 'Select') toggleMenu('main-menu'); else if (label === 'Start') toggleMenu('start-menu'); } } control.isTap = false;
+                if (label === 'Select' && control.isTap) { const duration = Date.now() - (control.pressTime || 0); if (duration < 300) { toggleMenu('main-menu'); } } control.isTap = false;
             };
             gameControls.forEach(control => { control.addEventListener('touchstart', handleStart, { passive: false }); control.addEventListener('mousedown', handleStart); control.addEventListener('touchend', handleEnd); control.addEventListener('mouseup', handleEnd); control.addEventListener('mouseleave', handleEnd); });
             

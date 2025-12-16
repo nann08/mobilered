@@ -45,12 +45,12 @@
             content: '';
             position: absolute;
             top: 0; left: 0; width: 100%; height: 100%;
-            z-index: 25; /* Above game (canvas/iframe) and start screen, below menus */
+            z-index: 200; /* UPDATED: Increased to 200 to overlay menus (100) and ensure effect is always visible */
             pointer-events: none;
-            /* Reduced opacity to make the grid less intrusive (0.1) */
+            /* Reduced opacity to make the grid less intrusive (0.05) */
             background: 
-                linear-gradient(rgba(0,0,0,0.1) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(0,0,0,0.1) 1px, transparent 1px);
+                linear-gradient(rgba(0,0,0,0.05) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0,0,0,0.05) 1px, transparent 1px);
             background-size: 2px 2px;
             /* Kept the vignette for depth */
             box-shadow: inset 0 0 20px rgba(0,0,0,0.2);
@@ -66,8 +66,15 @@
             background-color: #000;
         }
         
-        .menu-ui { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-color: white; padding: 8px 12px; display: none; flex-direction: column; align-items: center; justify-content: center; z-index: 100; overflow-y: auto; }
-        .menu-ui h2 { margin-top: 0; margin-bottom: 6px; font-size: 16px; }
+        /* UPDATED: Menu UI now uses dynamic variables for background and text */
+        .menu-ui { 
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%; 
+            background-color: var(--screen-bg); 
+            color: var(--screen-text);
+            padding: 8px 12px; display: none; flex-direction: column; align-items: center; justify-content: center; z-index: 100; overflow-y: auto; 
+            transition: background-color 0.3s, color 0.3s;
+        }
+        .menu-ui h2 { margin-top: 0; margin-bottom: 6px; font-size: 16px; color: var(--screen-text); }
         
         /* UPDATED: Start screen now uses variables for bg and text color */
         #start-screen { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 20; text-align: center; color: var(--screen-text); background-color: var(--screen-bg); transition: background-color 0.3s, color 0.3s; }
@@ -197,8 +204,9 @@
                     <!-- GPU Accelerated Iframe -->
                     <iframe id="game-iframe" credentialless src="about:blank" allow="autoplay; fullscreen; gamepad; accelerometer; gyroscope; clipboard-write" sandbox="allow-forms allow-pointer-lock allow-popups allow-same-origin allow-scripts" referrerpolicy="no-referrer"></iframe>
                     
+                    <!-- UPDATED: Removed Tailwind text colors from menu headers to allow variable usage -->
                     <div id="main-menu" class="menu-ui">
-                        <h2 class="text-lg font-bold mb-3 text-gray-800 tracking-wider">MENU</h2>
+                        <h2 class="text-lg font-bold mb-3 tracking-wider">MENU</h2>
                         <div class="menu-btn" id="btn-menu-load-game">LOAD GAME</div>
                         <div class="menu-btn" id="btn-menu-exit-game" style="display:none; color: #dc2626;">EXIT GAME</div>
                         <div class="menu-btn" id="btn-menu-controls">CONTROLS</div>
@@ -207,7 +215,7 @@
                     </div>
 
                     <div id="load-game-menu" class="menu-ui">
-                        <h2 class="text-lg font-bold mb-3 text-gray-800 tracking-wider">SELECT TYPE</h2>
+                        <h2 class="text-lg font-bold mb-3 tracking-wider">SELECT TYPE</h2>
                         <div class="menu-btn" id="btn-load-rom-action">ROM FILE</div>
                         <div class="menu-btn" id="btn-load-html-file">HTML FILE</div>
                         <div class="menu-btn" id="btn-load-zip-web">WEB ZIP</div>
@@ -218,8 +226,8 @@
                     <input type="file" id="file-input-html" accept=".html,text/html" style="display:none">
                     <input type="file" id="file-input-zip-web" accept=".zip" style="display:none">
                     
-                    <div id="start-menu" class="menu-ui"><h2 class="text-lg font-bold mb-3 text-gray-800 tracking-wider">PAUSE</h2><div class="text-xs text-center text-gray-500 mb-2">Use in-game saves.</div><button id="btn-close-start-menu" class="btn-red">Resume</button></div>
-                    <div id="styles-menu" class="menu-ui"><h2 class="text-xl font-bold mb-4 text-gray-800">STYLES</h2><div class="w-full max-h-[140px] overflow-y-auto px-4">
+                    <div id="start-menu" class="menu-ui"><h2 class="text-lg font-bold mb-3 tracking-wider">PAUSE</h2><div class="text-xs text-center text-gray-500 mb-2">Use in-game saves.</div><button id="btn-close-start-menu" class="btn-red">Resume</button></div>
+                    <div id="styles-menu" class="menu-ui"><h2 class="text-xl font-bold mb-4">STYLES</h2><div class="w-full max-h-[140px] overflow-y-auto px-4">
                         <div class="theme-option" data-theme="nannboy"><div class="theme-preview" style="background: linear-gradient(145deg, #f3f4f6, #9ca3af); position: relative;"><div style="position: absolute; width: 8px; height: 8px; background: #800000; border-radius: 50%; bottom: 2px; right: 2px;"></div></div><span class="font-bold text-gray-700">Nann Boy</span></div>
                         <div class="theme-option" data-theme="red"><div class="theme-preview" style="background: linear-gradient(145deg, #E83942, #b91c1c);"></div><span class="font-bold text-gray-700">Original Red</span></div>
                         <div class="theme-option" data-theme="purple"><div class="theme-preview" style="background: linear-gradient(145deg, #7c3aed, #4c1d95);"></div><span class="font-bold text-gray-700">Atomic Purple</span></div>
@@ -230,9 +238,9 @@
                         <div class="theme-option" data-theme="white"><div class="theme-preview" style="background: linear-gradient(145deg, #f3f4f6, #9ca3af);"></div><span class="font-bold text-gray-700">Polar White</span></div>
                         <div class="theme-option" data-theme="black"><div class="theme-preview" style="background: linear-gradient(145deg, #27272a, #000000);"></div><span class="font-bold text-gray-700">Midnight Black</span></div>
                     </div><button id="btn-back-styles" class="btn-back">Back</button></div>
-                    <div id="key-binding-menu" class="menu-ui"><h2 class="text-xl font-bold mb-4 text-gray-800">Controls</h2><div id="bindings-list" class="max-h-40 overflow-y-auto w-full flex flex-col items-center"></div><button id="btn-close-key-map" class="btn-red">Close</button></div>
+                    <div id="key-binding-menu" class="menu-ui"><h2 class="text-xl font-bold mb-4">Controls</h2><div id="bindings-list" class="max-h-40 overflow-y-auto w-full flex flex-col items-center"></div><button id="btn-close-key-map" class="btn-red">Close</button></div>
                     <div id="key-selection-modal" class="menu-ui" style="display: none; z-index: 300;">
-                        <h2 class="text-xl font-bold mb-4 text-gray-800 flex-shrink-0">Map <span id="binding-label-display" class="text-red-600"></span></h2>
+                        <h2 class="text-xl font-bold mb-4 flex-shrink-0">Map <span id="binding-label-display" class="text-red-600"></span></h2>
                         <div id="virtual-keypad" class="grid grid-cols-5 gap-2 p-2 max-w-sm"></div>
                         <button id="btn-cancel-key-select" class="btn-red">Cancel</button>
                     </div>

@@ -655,10 +655,87 @@
             }
         }
 
-        // Web Zip and HTML handlers omitted for brevity but remain functional as per previous versions
-        // ... (The HTML/Web handlers use iframe logic which is separate from the canvas issue) ...
-        function handleWebZipUpload(event) { /* ... same as before ... */ }
-        function handleHtmlUpload(event) { /* ... same as before ... */ }
+        function handleWebZipUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            // CRITICAL: Kill ROM Canvas/Engine before starting HTML game
+            stopCurrentGame();
+            closeAllMenus();
+            initAudio();
+
+            const loadingOverlay = document.getElementById('loading-overlay');
+            if(loadingOverlay) {
+                loadingOverlay.style.display = 'flex';
+                const text = loadingOverlay.querySelector('#loading-text');
+                if(text) text.textContent = "LOADING WEB GAME...";
+            }
+
+            JSZip.loadAsync(file).then(async function(zip) {
+                const files = Object.keys(zip.files);
+                // Look for index.html at root or one level deep
+                let indexFile = files.find(name => name.toLowerCase() === 'index.html' || name.toLowerCase().endsWith('/index.html'));
+                
+                if (!indexFile) {
+                    if(files.length > 0) {
+                        // Fallback: try to find any .html file
+                        indexFile = files.find(name => name.toLowerCase().endsWith('.html'));
+                    }
+                }
+
+                if (!indexFile) {
+                    alert("No index.html found in zip");
+                    if(loadingOverlay) loadingOverlay.style.display = 'none';
+                    return;
+                }
+
+                // Get content string for srcdoc
+                const content = await zip.file(indexFile).async("string");
+                
+                if(loadingOverlay) loadingOverlay.style.display = 'none';
+                
+                const iframe = document.getElementById('game-iframe');
+                document.getElementById('start-screen').style.display = 'none';
+                
+                // Ensure iframe is visible and Canvas is gone (handled by stopCurrentGame)
+                iframe.style.display = 'block';
+                iframe.srcdoc = content;
+                
+                gameMode = 'html';
+                document.getElementById('power-led').classList.add('on');
+                document.getElementById('btn-menu-exit-game').style.display = 'block';
+                
+            }).catch(e => {
+                console.error(e);
+                if(loadingOverlay) loadingOverlay.style.display = 'none';
+                alert("Failed to load web zip");
+            });
+        }
+
+        function handleHtmlUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            // CRITICAL: Kill ROM Canvas/Engine before starting HTML game
+            stopCurrentGame();
+            closeAllMenus();
+            initAudio();
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const iframe = document.getElementById('game-iframe');
+                document.getElementById('start-screen').style.display = 'none';
+                
+                // Ensure iframe is visible and Canvas is gone
+                iframe.style.display = 'block';
+                iframe.srcdoc = e.target.result;
+                
+                gameMode = 'html';
+                document.getElementById('power-led').classList.add('on');
+                document.getElementById('btn-menu-exit-game').style.display = 'block';
+            };
+            reader.readAsText(file);
+        }
 
         function setupControlListeners() {
             const gameControls = document.querySelectorAll('.dpad-btn, .btn-round, .btn-pill'); 

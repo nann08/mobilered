@@ -17,7 +17,8 @@
     
     <style>
         *, *::before, *::after { box-sizing: border-box; -webkit-tap-highlight-color: transparent; -webkit-touch-callout: none; user-select: none; }
-        :root { --screen-color: #000000; --screen-shadow: #0f380f; --safe-top: env(safe-area-inset-top, 20px); --safe-bottom: env(safe-area-inset-bottom, 20px); --console-main: #E83942; --console-dark: #b91c1c; --bg-color: #7f1d1d; --btn-color: #1c1c1c; --dpad-color: #1c1c1c; --text-battery: #a1a1aa; }
+        /* UPDATED: Added --screen-bg and --screen-text variables */
+        :root { --screen-color: #000000; --screen-shadow: #0f380f; --safe-top: env(safe-area-inset-top, 20px); --safe-bottom: env(safe-area-inset-bottom, 20px); --console-main: #E83942; --console-dark: #b91c1c; --bg-color: #7f1d1d; --btn-color: #1c1c1c; --dpad-color: #1c1c1c; --text-battery: #a1a1aa; --screen-bg: #ffffff; --screen-text: #000000; }
         html, body { width: 100%; height: 100%; margin: 0; padding: 0; overscroll-behavior: none; position: fixed; overflow: hidden; background-color: var(--bg-color); transition: background-color 0.3s ease; font-family: 'Inter', sans-serif; display: flex; align-items: flex-start; justify-content: center; }
         #console-wrapper { transform-origin: top center; will-change: transform; display: flex; justify-content: center; transform: translate3d(0,0,0); }
         .gbc-body { --console-width: 440px; background: linear-gradient(145deg, var(--console-main) 0%, var(--console-dark) 100%); width: var(--console-width); border-radius: 20px 20px 60px 20px; box-shadow: 0 20px 40px rgba(0,0,0,0.5), inset 2px 2px 5px rgba(255,255,255,0.3); position: relative; display: flex; flex-direction: column; align-items: center; padding-top: calc(30px + var(--safe-top)); padding-bottom: var(--safe-bottom); contain: content; transition: background 0.3s ease; }
@@ -38,6 +39,22 @@
             backface-visibility: hidden; 
             contain: paint; 
         }
+
+        /* RESTORED: LCD Pixel Grid Overlay - Subtle */
+        .lcd-screen::after {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            z-index: 25; /* Above game (canvas/iframe) and start screen, below menus */
+            pointer-events: none;
+            /* Reduced opacity to make the grid less intrusive (0.1) */
+            background: 
+                linear-gradient(rgba(0,0,0,0.1) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0,0,0,0.1) 1px, transparent 1px);
+            background-size: 2px 2px;
+            /* Kept the vignette for depth */
+            box-shadow: inset 0 0 20px rgba(0,0,0,0.2);
+        }
         
         iframe { width: 100%; height: 100%; border: none; background-color: #000; display: none; will-change: transform; transform: translateZ(0); }
         
@@ -52,9 +69,10 @@
         .menu-ui { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-color: white; padding: 8px 12px; display: none; flex-direction: column; align-items: center; justify-content: center; z-index: 100; overflow-y: auto; }
         .menu-ui h2 { margin-top: 0; margin-bottom: 6px; font-size: 16px; }
         
-        #start-screen { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 20; text-align: center; color: #000000; background-color: #ffffff; }
-        .nann-pill { border: 3px solid #000000; border-radius: 50px; padding: 4px 24px; display: inline-block; margin-bottom: 20px; background: transparent; }
-        .nann-logo-text { font-family: 'Inter', sans-serif; font-weight: 900; font-size: 28px; color: #000000; letter-spacing: 1px; line-height: 1; }
+        /* UPDATED: Start screen now uses variables for bg and text color */
+        #start-screen { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 20; text-align: center; color: var(--screen-text); background-color: var(--screen-bg); transition: background-color 0.3s, color 0.3s; }
+        .nann-pill { border: 3px solid var(--screen-text); border-radius: 50px; padding: 4px 24px; display: inline-block; margin-bottom: 20px; background: transparent; transition: border-color 0.3s; }
+        .nann-logo-text { font-family: 'Inter', sans-serif; font-weight: 900; font-size: 28px; color: var(--screen-text); letter-spacing: 1px; line-height: 1; transition: color 0.3s; }
         
         .menu-btn { width: 90%; padding: 5px 0; margin: 2px 0; background-color: #f3f4f6; border: 2px solid #d1d5db; border-radius: 6px; font-weight: bold; font-size: 12px; color: #374151; text-align: center; cursor: pointer; transition: all 0.2s; flex-shrink: 0; }
         .menu-btn:active { background-color: #e5e7eb; transform: scale(0.98); }
@@ -249,7 +267,6 @@
         let userId = null;
         let gameMode = 'html'; 
         
-        // UPDATED: Added keyCode and code properties to ensure HTML games recognize the inputs
         let keyMap = {
             'Up': { key: 'ArrowUp', code: 'ArrowUp', keyCode: 38 },
             'Down': { key: 'ArrowDown', code: 'ArrowDown', keyCode: 40 },
@@ -273,12 +290,10 @@
         let mainGainNode = null; 
 
         function initAudio() {
-            // UPDATED: Check for closed state to ensure we can re-initialize after a full shutdown
             if (!audioCtx || audioCtx.state === 'closed') {
                 const AudioContext = window.AudioContext || window.webkitAudioContext;
                 if(AudioContext) {
                     audioCtx = new AudioContext({ latencyHint: 'playback' });
-                    // NOISE FIX: Create a Master Gain Node set to 0 initially
                     mainGainNode = audioCtx.createGain();
                     mainGainNode.gain.value = 0; 
                     mainGainNode.connect(audioCtx.destination);
@@ -317,6 +332,10 @@
         function applyTheme(themeName) {
             const root = document.documentElement;
             let mainColor = '#E83942'; let darkColor = '#b91c1c'; let btnColor = '#1c1c1c'; let dpadColor = '#1c1c1c'; let bgColor = '#7f1d1d';
+            // Defaults
+            let screenBg = '#ffffff'; 
+            let screenText = '#000000';
+
             if (themeName === 'purple') { mainColor = '#7c3aed'; darkColor = '#4c1d95'; bgColor = '#4c1d95'; }
             else if (themeName === 'glacier') { mainColor = '#a5f3fc'; darkColor = '#0891b2'; bgColor = '#164e63'; }
             else if (themeName === 'pink') { mainColor = '#f472b6'; darkColor = '#db2777'; bgColor = '#831843'; }
@@ -324,10 +343,20 @@
             else if (themeName === 'orange') { mainColor = '#f97316'; darkColor = '#c2410c'; bgColor = '#7c2d12'; }
             else if (themeName === 'white') { mainColor = '#f3f4f6'; darkColor = '#9ca3af'; bgColor = '#374151'; }
             else if (themeName === 'black') { mainColor = '#27272a'; darkColor = '#18181b'; bgColor = '#09090b'; }
-            else if (themeName === 'nannboy') { mainColor = '#f3f4f6'; darkColor = '#9ca3af'; bgColor = '#374151'; btnColor = '#800000'; dpadColor = '#800000'; }
+            else if (themeName === 'nannboy') { 
+                mainColor = '#f3f4f6'; darkColor = '#9ca3af'; bgColor = '#374151'; btnColor = '#800000'; dpadColor = '#800000'; 
+                // Set Retro Green colors only for nannboy theme
+                screenBg = '#9bbc0f'; 
+                screenText = '#0f380f';
+            }
+            
             root.style.setProperty('--console-main', mainColor); root.style.setProperty('--console-dark', darkColor);
             root.style.setProperty('--bg-color', bgColor); root.style.setProperty('--btn-color', btnColor);
             root.style.setProperty('--dpad-color', dpadColor);
+            // Apply dynamic screen colors
+            root.style.setProperty('--screen-bg', screenBg);
+            root.style.setProperty('--screen-text', screenText);
+            
             localStorage.setItem(themeStorageKey, themeName);
         }
         function loadTheme() { const savedTheme = localStorage.getItem(themeStorageKey); if (savedTheme) applyTheme(savedTheme); }
@@ -428,7 +457,6 @@
             currentMenu = 'keyselect'; document.getElementById('key-selection-modal').style.display = 'flex';
             document.getElementById('binding-label-display').textContent = label;
             const keypad = document.getElementById('virtual-keypad'); keypad.innerHTML = '';
-            // Added Backspace to the list of available keys
             const keys = [{k:'1',c:'Digit1',d:'1'},{k:'2',c:'Digit2',d:'2'},{k:'3',c:'Digit3',d:'3'},{k:'4',c:'Digit4',d:'4'},{k:'5',c:'Digit5',d:'5'},{k:'q',c:'KeyQ',d:'Q'},{k:'w',c:'KeyW',d:'W'},{k:'e',c:'KeyE',d:'E'},{k:'r',c:'KeyR',d:'R'},{k:'a',c:'KeyA',d:'A'},{k:'s',c:'KeyS',d:'S'},{k:'d',c:'KeyD',d:'D'},{k:'f',c:'KeyF',d:'F'},{k:'z',c:'KeyZ',d:'Z'},{k:'x',c:'KeyX',d:'X'},{k:'c',c:'KeyC',d:'C'},{k:'v',c:'KeyV',d:'V'},{k:'Backspace',c:'Backspace',d:'BACK',kc:8},{k:' ',c:'Space',d:'SPACE',kc:32},{k:'Enter',c:'Enter',d:'ENTER',kc:13},{k:'ArrowUp',c:'ArrowUp',d:'↑'},{k:'ArrowDown',c:'ArrowDown',d:'↓'},{k:'ArrowLeft',c:'ArrowLeft',d:'←'},{k:'ArrowRight',c:'ArrowRight',d:'→'}];
             keys.forEach(vKey => { const btn = document.createElement('div'); btn.className = 'virtual-key-btn'; btn.textContent = vKey.display || vKey.d; btn.addEventListener('click', () => { keyMap[label] = { key: vKey.k, code: vKey.c, keyCode: vKey.kc || (vKey.k.length===1 ? vKey.k.toUpperCase().charCodeAt(0) : 0) }; saveKeyMap(); hideKeySelection(); }); keypad.appendChild(btn); });
         }
@@ -459,7 +487,7 @@
         }
         function toggleMenu(menuId) { if (currentMenu === menuId) closeAllMenus(); else openMenu(menuId); }
         
-        // UPDATED: "Soft" Stop - Pauses instead of destroys to prevent iOS memory crashes
+        // "Soft" Stop - Pauses instead of destroys to prevent iOS memory crashes
         async function stopCurrentGame(fullShutdown = false) {
             // 1. Clear Intervals
             if (window.saveSyncInterval) {

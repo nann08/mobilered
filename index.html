@@ -273,7 +273,8 @@
         let mainGainNode = null; 
 
         function initAudio() {
-            if (!audioCtx) {
+            // UPDATED: Check for closed state to ensure we can re-initialize after a full shutdown
+            if (!audioCtx || audioCtx.state === 'closed') {
                 const AudioContext = window.AudioContext || window.webkitAudioContext;
                 if(AudioContext) {
                     audioCtx = new AudioContext({ latencyHint: 'playback' });
@@ -458,43 +459,76 @@
         }
         function toggleMenu(menuId) { if (currentMenu === menuId) closeAllMenus(); else openMenu(menuId); }
         
-        function stopCurrentGame() {
+        // UPDATED: Added fullShutdown parameter to completely kill audio on Exit
+        async function stopCurrentGame(fullShutdown = false) {
+            // 1. Clear Intervals
             if (window.saveSyncInterval) {
                 clearInterval(window.saveSyncInterval);
                 window.saveSyncInterval = null;
             }
 
+            // 2. Hide/Reset Iframe (Web Games)
             const iframe = document.getElementById('game-iframe');
-            iframe.src = 'about:blank';
-            iframe.style.display = 'none';
+            if (iframe) {
+                iframe.src = 'about:blank';
+                iframe.style.display = 'none';
+            }
 
+            // 3. Quit mGBA (ROM Games)
             if (window.Module) {
+                // Try to gracefully stop the game loop
                 if(window.Module.pauseGame) {
                     try { window.Module.pauseGame(); } catch(e) { }
                 }
+                // Try to quit the emulator runtime
                 if (window.Module.quitMgba) {
                     try { window.Module.quitMgba(); } catch(e) { }
                 }
+                
+                // Forcefully unmount file system if possible to release locks
+                try {
+                    if (window.Module.FS && window.Module.FS.unmount) {
+                        window.Module.FS.unmount('/data');
+                    }
+                } catch(e) { }
             }
             
-            // CRITICAL FIX: Explicitly nullify the Module to allow iOS Garbage Collection
+            // 4. DESTROY MODULE: Explicitly delete to free memory
             window.Module = null;
+            try { delete window.Module; } catch(e) {} // Extra safety for strict mode
 
-            // CRITICAL FIX: Suspend Audio to release iOS hardware lock immediately
-            if (audioCtx && audioCtx.state === 'running') {
-                audioCtx.suspend();
+            // 5. REMOVE CANVAS: Ensure visual cleanup
+            const canvas = document.getElementById('canvas');
+            if (canvas) { 
+                canvas.remove(); 
+            }
+
+            // 6. AUDIO CLEANUP
+            if (fullShutdown) {
+                // Completely close audio context (Exit Game)
+                if (audioCtx) {
+                    try {
+                        if (audioCtx.state !== 'closed') await audioCtx.close();
+                    } catch(e) { console.error("Error closing audio:", e); }
+                    audioCtx = null;
+                    mainGainNode = null;
+                }
+            } else {
+                // Switching games: Suspend to release hardware lock temporarily
+                if (audioCtx && audioCtx.state === 'running') {
+                    audioCtx.suspend();
+                }
             }
             
-            // Cleanup Canvas
-            const canvas = document.getElementById('canvas');
-            if (canvas) { canvas.remove(); }
-            
-            document.getElementById('power-led').classList.remove('on');
+            // 7. Reset LED and Mode
+            const led = document.getElementById('power-led');
+            if (led) led.classList.remove('on');
             gameMode = null;
         }
 
         function exitGame() {
-            stopCurrentGame();
+            // Pass true to trigger full audio shutdown
+            stopCurrentGame(true);
             document.getElementById('start-screen').style.display = 'flex';
             document.getElementById('btn-menu-exit-game').style.display = 'none';
             closeAllMenus();
@@ -532,7 +566,8 @@
                 }
             }
 
-            stopCurrentGame(); 
+            // Pass false so we don't destroy the audio context we just initialized in handleRomUpload
+            stopCurrentGame(false); 
 
             // 1. DYNAMICALLY CREATE CANVAS - Essential for fresh context
             const lcdScreen = document.getElementById('lcd-screen');
@@ -710,8 +745,9 @@
             const file = event.target.files[0];
             if (!file) return;
             
-            // CRITICAL: Kill ROM Canvas/Engine before starting HTML game
-            stopCurrentGame();
+            // Kill ROM Canvas/Engine fully (true) because web apps handle their own audio
+            // We then re-init audio for UI sounds immediately after
+            stopCurrentGame(true);
             closeAllMenus();
             initAudio();
 
@@ -770,8 +806,8 @@
             const file = event.target.files[0];
             if (!file) return;
 
-            // CRITICAL: Kill ROM Canvas/Engine before starting HTML game
-            stopCurrentGame();
+            // Kill ROM Canvas/Engine fully
+            stopCurrentGame(true);
             closeAllMenus();
             initAudio();
 

@@ -468,11 +468,21 @@
             iframe.src = 'about:blank';
             iframe.style.display = 'none';
 
-            if (window.Module && window.Module.pauseGame) {
-                window.Module.pauseGame();
+            if (window.Module) {
+                if(window.Module.pauseGame) {
+                    try { window.Module.pauseGame(); } catch(e) { }
+                }
+                if (window.Module.quitMgba) {
+                    try { window.Module.quitMgba(); } catch(e) { }
+                }
             }
-            if (window.Module && window.Module.quitMgba) {
-                try { window.Module.quitMgba(); } catch(e) { }
+            
+            // CRITICAL FIX: Explicitly nullify the Module to allow iOS Garbage Collection
+            window.Module = null;
+
+            // CRITICAL FIX: Suspend Audio to release iOS hardware lock immediately
+            if (audioCtx && audioCtx.state === 'running') {
+                audioCtx.suspend();
             }
             
             // Cleanup Canvas

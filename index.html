@@ -213,13 +213,7 @@
                         <div class="theme-option" data-theme="black"><div class="theme-preview" style="background: linear-gradient(145deg, #27272a, #000000);"></div><span class="font-bold text-gray-700">Midnight Black</span></div>
                     </div><button id="btn-back-styles" class="btn-back">Back</button></div>
                     <div id="key-binding-menu" class="menu-ui"><h2 class="text-xl font-bold mb-4 text-gray-800">Controls</h2><div id="bindings-list" class="max-h-40 overflow-y-auto w-full flex flex-col items-center"></div><button id="btn-close-key-map" class="btn-red">Close</button></div>
-                    
-                    <!-- Modified Key Selection Modal Structure -->
-                    <div id="key-selection-modal" class="menu-ui" style="display: none; z-index: 300;">
-                        <h2 class="text-xl font-bold mb-4 text-gray-800 flex-shrink-0">Map <span id="binding-label-display" class="text-red-600"></span></h2>
-                        <div id="virtual-keypad" class="grid grid-cols-5 gap-2 p-2 max-w-sm"></div>
-                        <button id="btn-cancel-key-select" class="btn-red">Cancel</button>
-                    </div>
+                    <div id="key-selection-modal" class="menu-ui" style="display: none; z-index: 300;"><h2 class="text-xl font-bold mb-4 text-gray-800 flex-shrink-0">Map <span id="binding-label-display" class="text-red-600"></span></h2><div id="virtual-keypad" class="grid grid-cols-5 gap-2 p-2 max-w-sm"></div><button id="btn-cancel-key-select" class="btn-red">Cancel</button></div>
                     
                     <div id="toast-notification">GAME SAVED</div>
                 </div>
@@ -654,6 +648,22 @@
                 reader.readAsArrayBuffer(file);
             }
         }
+        
+        // HELPER TO INJECT RESIZING STYLES INTO GAME HTML
+        function injectFitStyles(htmlContent) {
+            const styleTag = `
+            <style>
+                html, body { width: 100%; height: 100%; margin: 0; padding: 0; overflow: hidden; background-color: #000; }
+                canvas, #canvas, #game { width: 100% !important; height: 100% !important; object-fit: contain !important; display: block; margin: auto; position: absolute; top: 0; left: 0; right: 0; bottom: 0; }
+            </style>
+            <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+            `;
+            if (htmlContent.includes('<head>')) {
+                return htmlContent.replace('<head>', '<head>' + styleTag);
+            } else {
+                return styleTag + htmlContent;
+            }
+        }
 
         function handleWebZipUpload(event) {
             const file = event.target.files[0];
@@ -690,7 +700,10 @@
                 }
 
                 // Get content string for srcdoc
-                const content = await zip.file(indexFile).async("string");
+                let content = await zip.file(indexFile).async("string");
+                
+                // INJECT RESIZING STYLES
+                content = injectFitStyles(content);
                 
                 if(loadingOverlay) loadingOverlay.style.display = 'none';
                 
@@ -728,7 +741,12 @@
                 
                 // Ensure iframe is visible and Canvas is gone
                 iframe.style.display = 'block';
-                iframe.srcdoc = e.target.result;
+                
+                let content = e.target.result;
+                // INJECT RESIZING STYLES
+                content = injectFitStyles(content);
+                
+                iframe.srcdoc = content;
                 
                 gameMode = 'html';
                 document.getElementById('power-led').classList.add('on');

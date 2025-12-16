@@ -187,22 +187,8 @@
                         <div class="theme-option" data-theme="white"><div class="theme-preview" style="background: linear-gradient(145deg, #f3f4f6, #9ca3af);"></div><span class="font-bold text-gray-700">Polar White</span></div>
                         <div class="theme-option" data-theme="black"><div class="theme-preview" style="background: linear-gradient(145deg, #27272a, #000000);"></div><span class="font-bold text-gray-700">Midnight Black</span></div>
                     </div><button id="btn-back-styles" class="btn-back">Back</button></div>
-
-                    <!-- Updated Key Binding Menu: Fixed Scrolling -->
-                    <div id="key-binding-menu" class="menu-ui" style="justify-content: flex-start; overflow: hidden; padding-bottom: 20px;">
-                        <h2 class="text-xl font-bold mb-4 text-gray-800 flex-shrink-0">Controls</h2>
-                        <!-- Added touch-action: pan-y to ensure scrolling works on mobile -->
-                        <div id="bindings-list" class="flex-1 w-full overflow-y-auto flex flex-col items-center mb-4 min-h-0" style="touch-action: pan-y;"></div>
-                        <button id="btn-close-key-map" class="btn-red flex-shrink-0">Close</button>
-                    </div>
-
-                    <!-- Updated Key Selection Modal: Fixed Scrolling -->
-                    <div id="key-selection-modal" class="menu-ui" style="display: none; z-index: 300; justify-content: flex-start; overflow: hidden; padding-bottom: 20px;">
-                        <h2 class="text-xl font-bold mb-4 text-gray-800 flex-shrink-0">Map <span id="binding-label-display" class="text-red-600"></span></h2>
-                        <!-- Added touch-action: pan-y to ensure scrolling works on mobile -->
-                        <div id="virtual-keypad" class="grid grid-cols-5 gap-2 p-2 max-w-sm w-full overflow-y-auto flex-1 min-h-0 mb-4" style="touch-action: pan-y;"></div>
-                        <button id="btn-cancel-key-select" class="btn-red flex-shrink-0">Cancel</button>
-                    </div>
+                    <div id="key-binding-menu" class="menu-ui"><h2 class="text-xl font-bold mb-4 text-gray-800">Controls</h2><div id="bindings-list" class="max-h-40 overflow-y-auto w-full flex flex-col items-center"></div><button id="btn-close-key-map" class="btn-red">Close</button></div>
+                    <div id="key-selection-modal" class="menu-ui" style="display: none; z-index: 300;"><h2 class="text-xl font-bold mb-4 text-gray-800">Map <span id="binding-label-display" class="text-red-600"></span></h2><div id="virtual-keypad" class="grid grid-cols-5 gap-2 p-2 max-w-sm overflow-y-auto" style="max-height: 70%;"></div><button id="btn-cancel-key-select" class="btn-red">Cancel</button></div>
                     
                     <div id="toast-notification">GAME SAVED</div>
                 </div>
@@ -234,21 +220,16 @@
         let userId = null;
         let gameMode = 'html'; 
         
-        // Define default key map for fallback and merging
-        const defaultKeyMap = {
+        let keyMap = {
             'Up': { key: 'ArrowUp' },
             'Down': { key: 'ArrowDown' },
             'Left': { key: 'ArrowLeft' },
             'Right': { key: 'ArrowRight' }, 
             'A': { key: 'x' },  
-            'B': { key: 'z' },
-            'L': { key: 'a' },
-            'R': { key: 's' },  
+            'B': { key: 'z' },  
             'Start': { key: 'Enter' },
             'Select': { key: 'Backspace' },
         };
-
-        let keyMap = JSON.parse(JSON.stringify(defaultKeyMap));
         
         const keyMapStorageKey = `emulator-keymap-${appId}`;
         const themeStorageKey = `emulator-theme-${appId}`;
@@ -333,22 +314,7 @@
             } catch (error) { console.error("Auth Error:", error); loadingOverlay.innerHTML = "Offline Mode"; setTimeout(() => loadingOverlay.style.display = 'none', 1000); }
         }
 
-        function loadKeyMap() { 
-            const storedMap = localStorage.getItem(keyMapStorageKey); 
-            if (storedMap) { 
-                try { 
-                    const parsedMap = JSON.parse(storedMap);
-                    // Merge stored map with defaults to ensure missing keys (Up, Down, L, R, etc.) are restored
-                    keyMap = { ...defaultKeyMap, ...parsedMap };
-                } catch (e) { 
-                    keyMap = defaultKeyMap; 
-                } 
-            } else {
-                keyMap = defaultKeyMap;
-            }
-            renderBindings(); 
-        }
-        
+        function loadKeyMap() { const storedMap = localStorage.getItem(keyMapStorageKey); if (storedMap) { try { keyMap = JSON.parse(storedMap); } catch (e) { } } renderBindings(); }
         function saveKeyMap() { localStorage.setItem(keyMapStorageKey, JSON.stringify(keyMap)); renderBindings(); }
         function renderBindings() {
             const bindingsList = document.getElementById('bindings-list');

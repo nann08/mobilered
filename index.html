@@ -428,6 +428,11 @@
         function toggleMenu(menuId) { if (currentMenu === menuId) closeAllMenus(); else openMenu(menuId); }
         
         function stopCurrentGame() {
+            if (window.saveSyncInterval) {
+                clearInterval(window.saveSyncInterval);
+                window.saveSyncInterval = null;
+            }
+
             const iframe = document.getElementById('game-iframe');
             iframe.src = 'about:blank';
             iframe.style.display = 'none';
@@ -519,19 +524,53 @@
                 // 4. INIT FILESYSTEM
                 await Module.FSInit();
 
+                // START: Persistence Logic (Hard Saves Only)
+                // We create a /data directory and mount the browser's IDBFS to it.
+                // This ensures files written here (like .sav files) persist across sessions.
+                try {
+                    // Try to make directory (ignore if exists)
+                    try { Module.FS.mkdir('/data'); } catch(e) {}
+                    
+                    // Mount IndexedDB to /data
+                    Module.FS.mount(Module.FS.filesystems.IDBFS, {}, '/data');
+                    
+                    // Pull existing saves from IndexedDB into the game's memory
+                    await new Promise((resolve) => {
+                        Module.FS.syncfs(true, (err) => {
+                            if (err) console.error("FS Sync Error:", err);
+                            resolve();
+                        });
+                    });
+                } catch(e) {
+                    console.warn("Could not mount IDBFS for saves:", e);
+                }
+                // END: Persistence Logic
+
                 // 5. ASSIGN GLOBALS
                 window.Module = Module; 
 
                 debugLog("mGBA Module Initialized via Factory.");
 
                 const ext = romName.split('.').pop();
-                const safeName = 'game.' + ext;
+                // CHANGE: Write game to /data/ so its .sav file is created there automatically
+                const safeName = '/data/game.' + ext; 
                 
                 // 6. WRITE ROM & LOAD
                 Module.FS.writeFile(safeName, new Uint8Array(romBuffer));
                 Module.loadGame(safeName);
                 
                 gameMode = 'rom';
+                
+                // SETUP AUTO-SYNC FOR HARD SAVES
+                // Syncs memory to IndexedDB every 5 seconds to ensure in-game saves are kept
+                if (window.saveSyncInterval) clearInterval(window.saveSyncInterval);
+                window.saveSyncInterval = setInterval(() => {
+                    if (window.Module) {
+                        window.Module.FS.syncfs(false, (err) => {
+                            if(err) console.error("Save Sync Error:", err);
+                        });
+                    }
+                }, 5000);
 
                 document.getElementById('power-led').classList.add('on');
                 document.getElementById('btn-menu-exit-game').style.display = 'block'; 

@@ -90,7 +90,9 @@
             background-color: var(--screen-bg); 
             color: var(--screen-text);
             /* Use flex-start and hidden overflow to manage scrolling internally */
-            display: flex; flex-direction: column; align-items: center; justify-content: flex-start; 
+            /* CRITICAL FIX: Changed 'display: flex' back to 'display: none' so menus are hidden by default */
+            display: none; 
+            flex-direction: column; align-items: center; justify-content: flex-start; 
             padding: 10px 12px; 
             z-index: 100; 
             overflow: hidden; /* Prevent outer scroll */
@@ -1019,5 +1021,6 @@
     </script>
 </body>
 </html>
+
 
 
